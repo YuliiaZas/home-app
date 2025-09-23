@@ -1,0 +1,156 @@
+[
+  {
+    "alias": "tpl_default_overview",
+    "title": "Overview",
+    "icon": "home",
+    "tabs": [
+      {
+        "alias": "overview",
+        "title": "Overview",
+        "cards": [
+          {
+            "alias": "balcony-weather",
+            "title": "Balcony",
+            "layout": "horizontalLayout",
+            "itemAliases": [ "temperature-outside", "humidity-outside", "weather" ]
+          },
+          {
+            "alias": "indoor-rooms",
+            "title": "Rooms",
+            "layout": "verticalLayout",
+            "itemAliases": [ "co2-1", "humidity-1" ]
+          },
+          {
+            "alias": "motion",
+            "title": "",
+            "layout": "singleDevice",
+            "itemAliases": [ "motion-outside" ]
+          },
+          {
+            "alias": "living-room-mixed",
+            "title": "Living Room",
+            "layout": "verticalLayout",
+            "itemAliases": [ "floor-lamp", "tv", "temperature-1", "co2-1" ]
+          }
+        ]
+      },
+      {
+        "alias": "lights",
+        "title": "Lights",
+        "cards": [
+          {
+            "alias": "kitchen-light",
+            "title": "Kitchen",
+            "layout": "singleDevice",
+            "itemAliases": [ "ceiling-light-kitchen" ]
+          },
+          {
+            "alias": "corridor-light",
+            "title": "Corridor",
+            "layout": "singleDevice",
+            "itemAliases": [ "main-light" ]
+          },
+          {
+            "alias": "living-room-light",
+            "title": "Living Room",
+            "layout": "singleDevice",
+            "itemAliases": [ "floor-lamp" ]
+          },
+          {
+            "alias": "bedroom-light",
+            "title": "Bedroom",
+            "layout": "singleDevice",
+            "itemAliases": [ "ceiling-light-master-bedroom" ]
+          },
+          {
+            "alias": "basement-light",
+            "title": "Basement",
+            "layout": "singleDevice",
+            "itemAliases": [ "basement-light" ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "alias": "tpl_default_lights",
+    "title": "Electricity",
+    "icon": "bolt",
+    "tabs": [
+      {
+        "alias": "usage",
+        "title": "Current Usage",
+        "cards": [
+          {
+            "alias": "meter-status",
+            "title": "Electric Meter",
+            "layout": "horizontalLayout",
+            "itemAliases": [ "power-total", "peak-hour" ]
+          },
+          {
+            "alias": "usage-breakdown",
+            "title": "Appliance Breakdown",
+            "layout": "verticalLayout",
+            "itemAliases": [ "power-living-room", "power-kitchen", "power-heater" ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "alias": "tpl_default_climate",
+    "title": "Climate",
+    "icon": "device_thermostat",
+    "tabs": [
+      {
+        "alias": "inside",
+        "title": "Indoor",
+        "cards": [
+          {
+            "alias": "climate-bedroom",
+            "title": "Bedroom",
+            "layout": "singleDevice",
+            "itemAliases": [ "temperature-2", "humidity-0" ]
+          },
+          {
+            "alias": "climate-kitchen",
+            "title": "Kitchen",
+            "layout": "singleDevice",
+            "itemAliases": [ "temperature-1", "co2-1" ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "alias": "tpl_default_security",
+    "title": "Security",
+    "icon": "shield",
+    "tabs": [
+      {
+        "alias": "home-security",
+        "title": "Home",
+        "cards": [
+          {
+            "alias": "entrance-door",
+            "title": "Entrance",
+            "layout": "singleDevice",
+            "itemAliases": [ "lock" ]
+          },
+          {
+            "alias": "camera-zone1",
+            "title": "Camera Zone 1",
+            "layout": "verticalLayout",
+            "itemAliases": [ "camera", "motion-1" ]
+          },
+          {
+            "alias": "alarm-status",
+            "title": "Alarm",
+            "layout": "singleDevice",
+            "itemAliases": [ "alarm" ]
+          }
+        ]
+      }
+    ]
+  }
+]
