@@ -23,7 +23,7 @@
           {
             "alias": "motion",
             "title": "",
-            "layout": "singleDevice",
+            "layout": "singleInstrument",
             "itemAliases": [ "motion-outside" ]
           },
           {
@@ -41,31 +41,31 @@
           {
             "alias": "kitchen-light",
             "title": "Kitchen",
-            "layout": "singleDevice",
+            "layout": "singleInstrument",
             "itemAliases": [ "ceiling-light-kitchen" ]
           },
           {
             "alias": "corridor-light",
             "title": "Corridor",
-            "layout": "singleDevice",
+            "layout": "singleInstrument",
             "itemAliases": [ "main-light" ]
           },
           {
             "alias": "living-room-light",
             "title": "Living Room",
-            "layout": "singleDevice",
+            "layout": "singleInstrument",
             "itemAliases": [ "floor-lamp" ]
           },
           {
             "alias": "bedroom-light",
             "title": "Bedroom",
-            "layout": "singleDevice",
+            "layout": "singleInstrument",
             "itemAliases": [ "ceiling-light-master-bedroom" ]
           },
           {
             "alias": "basement-light",
             "title": "Basement",
-            "layout": "singleDevice",
+            "layout": "singleInstrument",
             "itemAliases": [ "basement-light" ]
           }
         ]
@@ -109,13 +109,13 @@
           {
             "alias": "climate-bedroom",
             "title": "Bedroom",
-            "layout": "singleDevice",
+            "layout": "singleInstrument",
             "itemAliases": [ "temperature-2", "humidity-0" ]
           },
           {
             "alias": "climate-kitchen",
             "title": "Kitchen",
-            "layout": "singleDevice",
+            "layout": "singleInstrument",
             "itemAliases": [ "temperature-1", "co2-1" ]
           }
         ]
@@ -134,7 +134,7 @@
           {
             "alias": "entrance-door",
             "title": "Entrance",
-            "layout": "singleDevice",
+            "layout": "singleInstrument",
             "itemAliases": [ "lock" ]
           },
           {
@@ -146,7 +146,7 @@
           {
             "alias": "alarm-status",
             "title": "Alarm",
-            "layout": "singleDevice",
+            "layout": "singleInstrument",
             "itemAliases": [ "alarm" ]
           }
         ]

@@ -3,7 +3,7 @@ import { Document, Schema, SchemaDefinition, model } from 'mongoose';
 export interface IDashboard extends Document, IDashboardData {}
 
 export interface IDashboardData {
-  ownerUserId: string;
+  ownerUserId: Schema.Types.ObjectId;
   title: string;
   icon: string;
   alias?: string;
@@ -17,14 +17,13 @@ export interface ITab {
 }
 
 export interface ICard {
-  layout: string;
   title: string;
   alias?: string;
+  layout: string;
   items: string[];
 }
 
 export const dashboardSchemaDefinition: SchemaDefinition = {
-  ownerUserId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   title: String,
   icon: String,
   alias: String,
@@ -48,6 +47,9 @@ export const dashboardSchemaDefinition: SchemaDefinition = {
   ],
 };
 
-const dashboardSchema = new Schema<IDashboard>(dashboardSchemaDefinition);
+const dashboardSchema = new Schema<IDashboard>({
+  ...dashboardSchemaDefinition,
+  ownerUserId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+});
 
 export const Dashboard = model('Dashboard', dashboardSchema);

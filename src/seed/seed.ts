@@ -1,7 +1,12 @@
+import 'dotenv/config';
 import mongoose from 'mongoose';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { DashboardTemplate, IDashboardTemplateData, IDashboardTemplateInitial, Instrument } from '@models';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 async function connectDatabase() {
   await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/home-app');

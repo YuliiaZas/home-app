@@ -21,7 +21,7 @@ export interface IDashboardTemplate extends IDashboardTemplateData, Document {}
 
 const dashboardTemplateSchema = new Schema<IDashboardTemplate>({
   ...dashboardSchemaDefinition,
-  isTemplate: true,
+  isTemplate: { type: Boolean, default: true, required: true },
 });
 
 export const DashboardTemplate = model('DashboardTemplate', dashboardTemplateSchema);

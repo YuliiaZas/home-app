@@ -1,22 +1,20 @@
+import 'dotenv/config';
 import express from 'express';
-import { json } from 'body-parser';
-import { setRoutes } from './routes/index';
-import { connectDatabase } from './config/database';
-import { errorHandler } from './middleware/index';
+import connectDatabase from './config/database';
+import { errorHandler, notFoundHandler } from './middleware/index';
+import routes from './routes/index';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
-app.use(json());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Database connection
 connectDatabase();
 
-// Routes
-setRoutes(app);
+app.use('/api', routes);
 
-// Error handling middleware
+app.use(notFoundHandler);
 app.use(errorHandler);
 
 app.listen(PORT, () => {
