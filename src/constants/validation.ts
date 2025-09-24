@@ -1,18 +1,21 @@
 export const VALIDATION = {
   LENGTH: {
-    DASHBOARD_ALIAS_MAX: 30,
-    DASHBOARD_TITLE_MAX: 50,
-    TAB_TITLE_MAX: 50,
     USERNAME_MIN: 2,
     USERNAME_MAX: 50,
     FULL_NAME_MIN: 2,
     FULL_NAME_MAX: 100,
+    DASHBOARD_ALIAS_MAX: 30,
+    DASHBOARD_TITLE_MAX: 50,
+    TAB_TITLE_MAX: 50,
+    ICON_MIN: 1,
+    ICON_MAX: 30,
+    LABEL_MIN: 1,
     LABEL_MAX: 100,
     ALIAS_MAX: 50,
     UNIT_MAX: 20,
   },
   PATTERN: {
-    ID: /^[a-zA-Z0-9-_]+$/,
+    ALIAS: /^[a-zA-Z0-9-_]+$/,
     PASSWORD: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};'"\\|,.<>/?]).{4,}$/,
   },
   MESSAGES: {

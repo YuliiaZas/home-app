@@ -1,4 +1,5 @@
 import { Instrument, IUserInstrument, UserInstrument } from '@models';
+import { AppError } from '@utils';
 
 export class UserInstrumentService {
   static async updateUserInstrumentsForDashboard({
@@ -36,28 +37,29 @@ export class UserInstrumentService {
       const globalInstrument = await Instrument.findOne({
         id: instrumentId,
       }).lean();
-
-      if (globalInstrument) {
-        const newUserInstrument = new UserInstrument({
-          userId,
-          instrumentId,
-          dashboards: [dashboardId],
-          ...(globalInstrument.type === 'device' ? { state: globalInstrument.state ?? false } : {}),
-          ...(globalInstrument.type === 'sensor' ? { value: globalInstrument.value } : {}),
-        });
-        await newUserInstrument.save();
+      if (!globalInstrument) {
+        throw new AppError(`Instrument with id ${instrumentId} not found`, 400);
       }
+
+      const newUserInstrument = new UserInstrument({
+        userId,
+        instrumentId,
+        dashboards: [dashboardId],
+        ...(globalInstrument.type === 'device' ? { state: globalInstrument.state ?? false } : {}),
+        ...(globalInstrument.type === 'sensor' ? { value: globalInstrument.value } : {}),
+      });
+      await newUserInstrument.save();
     }
   }
 
   static async removeUserInstrumentsForDashboard({ userId, dashboardId }: { userId: string; dashboardId: string }) {
-    const userInstrumentsForDashboard: IUserInstrument[] = await UserInstrument.find({
+    const userInstrumentsForDashboard = await UserInstrument.find<IUserInstrument>({
       userId,
       dashboards: dashboardId,
     });
 
     userInstrumentsForDashboard.forEach(async (userInstrument) => {
-      userInstrument.dashboards = userInstrument.dashboards.filter((dId) => dId !== dashboardId);
+      userInstrument.dashboards = userInstrument.dashboards.filter((dId) => dId.toString() !== dashboardId);
       if (userInstrument.dashboards.length === 0) {
         await UserInstrument.deleteOne({ _id: userInstrument._id });
       } else {

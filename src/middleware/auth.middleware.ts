@@ -9,15 +9,15 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
     const token = authorizationHeader?.[1];
     
     if (!token || authorizationMethod !== 'Bearer') {
-      throw new AppError('Unauthorized');
+      throw new AppError('Unauthorized', 401);
     }
     
     const payload = verifyAccessToken(token);
-    if (!isPayload(payload)) throw new AppError('Invalid token payload');
+    if (!isPayload(payload)) throw new AppError('Invalid token payload', 401);
 
     const user = await User.findById(payload.sub);
 
-    if (!user || user.tokenVersion !== payload.v) throw new AppError('Invalid token');
+    if (!user || user.tokenVersion !== payload.v) throw new AppError('Invalid token', 401);
 
     req.user = { id: user.id, userName: user.userName };
     next();

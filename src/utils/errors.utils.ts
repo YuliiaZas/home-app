@@ -2,7 +2,7 @@ import { Response } from 'express';
 import { MongoError } from 'mongodb';
 
 export class AppError extends Error {
-  constructor(public message: string, public statusCode: number = 401) {
+  constructor(public message: string, public statusCode: number) {
     super(message);
     this.name = 'AppError';
   }
