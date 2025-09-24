@@ -18,6 +18,7 @@
       "@routes": ["src/routes"],
       "@services": ["src/services"],
       "@utils": ["src/utils"],
+      "@constants": ["src/constants"]
     }
   },
   "include": ["src/**/*.ts"],
