@@ -26,7 +26,7 @@ const userInstrumentSchema = new Schema<IUserInstrument>({
 
   aliasLabel: {
     type: String,
-    maxlength: VALIDATION.ARRAY.MAX_LENGTH('Alias Id', VALIDATION.LENGTH.ALIAS_MAX),
+    maxlength: VALIDATION.ARRAY.MAX_LENGTH('"aliasId"', VALIDATION.LENGTH.ALIAS_MAX),
     trim: true,
   },
 
@@ -38,7 +38,7 @@ const userInstrumentSchema = new Schema<IUserInstrument>({
     amount: Schema.Types.Mixed,
     unit: {
       type: String,
-      maxlength: VALIDATION.ARRAY.MAX_LENGTH('Unit', VALIDATION.LENGTH.UNIT_MAX),
+      maxlength: VALIDATION.ARRAY.MAX_LENGTH('"value.unit"', VALIDATION.LENGTH.UNIT_MAX),
       trim: true,
     },
   },

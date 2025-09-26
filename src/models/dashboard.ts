@@ -38,14 +38,14 @@ export interface IDashboardBaseSeed extends Omit<IDashboardBase, 'tabs'> {
 const cardSchema = new Schema<ICard>({
   title: {
     type: String,
-    maxlength: VALIDATION.ARRAY.MAX_LENGTH('Card Title', VALIDATION.LENGTH.TITLE_MAX),
+    maxlength: VALIDATION.ARRAY.MAX_LENGTH('Card "title"', VALIDATION.LENGTH.TITLE_MAX),
     trim: true,
   },
 
   layout: {
     type: String,
     enum: ['verticalLayout', 'horizontalLayout', 'singleInstrument'],
-    required: VALIDATION.ARRAY.REQUIRED('Card Layout'),
+    required: VALIDATION.ARRAY.REQUIRED('Card `layout"'),
   },
 
   items: [{ type: Schema.Types.ObjectId, ref: 'Instrument', required: true }],
@@ -64,15 +64,16 @@ cardSchema.pre('validate', function (next) {
 const tabSchema = new Schema<ITab>({
   title: {
     type: String,
-    required: VALIDATION.ARRAY.REQUIRED('Tab Title'),
-    maxlength: VALIDATION.ARRAY.MAX_LENGTH('Tab Title', VALIDATION.LENGTH.TITLE_MAX),
+    required: VALIDATION.ARRAY.REQUIRED('Tab "title"'),
+    maxlength: VALIDATION.ARRAY.MAX_LENGTH('Tab "title"', VALIDATION.LENGTH.TITLE_MAX),
     trim: true,
   },
 
   aliasId: {
     type: String,
-    maxlength: VALIDATION.ARRAY.MAX_LENGTH('Tab Alias Id', VALIDATION.LENGTH.ALIAS_ID_MAX),
-    match: VALIDATION.ARRAY.PATTERN('Tab Alias Id', VALIDATION.PATTERN.ALIAS_ID),
+    required: VALIDATION.ARRAY.REQUIRED('Tab "aliasId"'),
+    maxlength: VALIDATION.ARRAY.MAX_LENGTH('Tab "aliasId"', VALIDATION.LENGTH.ALIAS_ID_MAX),
+    match: VALIDATION.ARRAY.PATTERN('Tab "aliasId"', VALIDATION.PATTERN.ALIAS_ID),
     trim: true,
   },
 
@@ -82,23 +83,24 @@ const tabSchema = new Schema<ITab>({
 export const dashboardSchemaDefinition: SchemaDefinition = {
   title: {
     type: String,
-    required: VALIDATION.ARRAY.REQUIRED('Dashboard Title'),
-    maxlength: VALIDATION.ARRAY.MAX_LENGTH('Dashboard Title', VALIDATION.LENGTH.TITLE_MAX),
+    required: VALIDATION.ARRAY.REQUIRED('Dashboard "title"'),
+    maxlength: VALIDATION.ARRAY.MAX_LENGTH('Dashboard "title"', VALIDATION.LENGTH.TITLE_MAX),
     trim: true,
   },
 
   icon: {
     type: String,
-    required: VALIDATION.ARRAY.REQUIRED('Dashboard Icon'),
-    minlength: VALIDATION.ARRAY.MIN_LENGTH('Dashboard Icon', VALIDATION.LENGTH.ICON_MIN),
-    maxlength: VALIDATION.ARRAY.MAX_LENGTH('Dashboard Icon', VALIDATION.LENGTH.ICON_MAX),
+    required: VALIDATION.ARRAY.REQUIRED('Dashboard "icon"'),
+    minlength: VALIDATION.ARRAY.MIN_LENGTH('Dashboard "icon"', VALIDATION.LENGTH.ICON_MIN),
+    maxlength: VALIDATION.ARRAY.MAX_LENGTH('Dashboard "icon"', VALIDATION.LENGTH.ICON_MAX),
     trim: true,
   },
 
   aliasId: {
     type: String,
-    maxlength: VALIDATION.ARRAY.MAX_LENGTH('Dashboard Alias Id', VALIDATION.LENGTH.ALIAS_ID_MAX),
-    match: VALIDATION.ARRAY.PATTERN('Dashboard Alias Id', VALIDATION.PATTERN.ALIAS_ID),
+    required: VALIDATION.ARRAY.REQUIRED('Dashboard "aliasId"'),
+    maxlength: VALIDATION.ARRAY.MAX_LENGTH('Dashboard "aliasId"', VALIDATION.LENGTH.ALIAS_ID_MAX),
+    match: VALIDATION.ARRAY.PATTERN('Dashboard "aliasId"', VALIDATION.PATTERN.ALIAS_ID),
     trim: true,
   },
 
@@ -110,15 +112,12 @@ const dashboardSchema = new Schema<IDashboard>({
   ownerUserId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
 });
 
-dashboardSchema.index(
-  { ownerUserId: 1, aliasId: 1 },
-  { unique: true, partialFilterExpression: { aliasId: { $exists: true } } }
-);
+dashboardSchema.index({ ownerUserId: 1, aliasId: 1 }, { unique: true });
 
 dashboardSchema.pre('validate', function (next) {
   const duplicateTabAliasId = validateTabAliasIds(this.tabs);
   if (duplicateTabAliasId) {
-    return next(new AppValidationError(`Duplicate tab aliasId "${duplicateTabAliasId}" in the same dashboard`));
+    return next(new AppValidationError(`Duplicate Tab "aliasId" "${duplicateTabAliasId}" in the same dashboard`));
   }
   next();
 });

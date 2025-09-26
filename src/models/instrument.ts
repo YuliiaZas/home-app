@@ -21,29 +21,29 @@ const instrumentSchema = new Schema<IInstrument>({
       values: ['sensor', 'device'],
       message: '{VALUE} is not a valid instrument type. Must be "sensor" or "device"',
     },
-    required: VALIDATION.ARRAY.REQUIRED('Type'),
+    required: VALIDATION.ARRAY.REQUIRED('"type"'),
   },
 
   icon: {
     type: String,
-    required: VALIDATION.ARRAY.REQUIRED('Icon'),
-    minlength: VALIDATION.ARRAY.MIN_LENGTH('Icon', VALIDATION.LENGTH.ICON_MIN),
-    maxlength: VALIDATION.ARRAY.MAX_LENGTH('Icon', VALIDATION.LENGTH.ICON_MAX),
+    required: VALIDATION.ARRAY.REQUIRED('"icon"'),
+    minlength: VALIDATION.ARRAY.MIN_LENGTH('"icon"', VALIDATION.LENGTH.ICON_MIN),
+    maxlength: VALIDATION.ARRAY.MAX_LENGTH('"icon"', VALIDATION.LENGTH.ICON_MAX),
     trim: true,
   },
 
   label: {
     type: String,
-    required: VALIDATION.ARRAY.REQUIRED('Label'),
-    minlength: VALIDATION.ARRAY.MIN_LENGTH('Label', VALIDATION.LENGTH.LABEL_MIN),
-    maxlength: VALIDATION.ARRAY.MAX_LENGTH('Label', VALIDATION.LENGTH.LABEL_MAX),
+    required: VALIDATION.ARRAY.REQUIRED('"label"'),
+    minlength: VALIDATION.ARRAY.MIN_LENGTH('"label"', VALIDATION.LENGTH.LABEL_MIN),
+    maxlength: VALIDATION.ARRAY.MAX_LENGTH('"label"', VALIDATION.LENGTH.LABEL_MAX),
     trim: true,
   },
 
   aliasId: {
     type: String,
-    maxlength: VALIDATION.ARRAY.MAX_LENGTH('Alias Id', VALIDATION.LENGTH.ALIAS_ID_MAX),
-    match: VALIDATION.ARRAY.PATTERN('Alias Id', VALIDATION.PATTERN.ALIAS_ID),
+    maxlength: VALIDATION.ARRAY.MAX_LENGTH('"aliasId"', VALIDATION.LENGTH.ALIAS_ID_MAX),
+    match: VALIDATION.ARRAY.PATTERN('"aliasId"', VALIDATION.PATTERN.ALIAS_ID),
     trim: true,
   },
 
@@ -53,7 +53,7 @@ const instrumentSchema = new Schema<IInstrument>({
     amount: Schema.Types.Mixed,
     unit: {
       type: String,
-      maxlength: VALIDATION.ARRAY.MAX_LENGTH('Unit', VALIDATION.LENGTH.UNIT_MAX),
+      maxlength: VALIDATION.ARRAY.MAX_LENGTH('"value.unit"', VALIDATION.LENGTH.UNIT_MAX),
       trim: true,
     },
   },

@@ -16,7 +16,7 @@ const dashboardTemplateSchema = new Schema<IDashboardTemplate>({
 dashboardTemplateSchema.pre('validate', function (next) {
   const duplicateTabAliasId = validateTabAliasIds(this.tabs);
   if (duplicateTabAliasId) {
-    return next(new AppValidationError(`Duplicate tab aliasId "${duplicateTabAliasId}" in the same dashboard`));
+    return next(new AppValidationError(`Duplicate Tab "aliasId" "${duplicateTabAliasId}" in the same dashboard`));
   }
   next();
 });

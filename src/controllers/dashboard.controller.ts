@@ -15,12 +15,13 @@ export class DashboardController {
 
   static async createDashboard(req: Request, res: Response) {
     try {
-      const { title, icon } = req.body;
+      const { title, icon, aliasId } = req.body;
 
       const dashboard: IDashboard = await Dashboard.create({
         ownerUserId: req.user.id,
         title,
         icon,
+        aliasId,
         tabs: [],
       });
 

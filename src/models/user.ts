@@ -18,10 +18,10 @@ export interface IUserModel extends Model<IUser> {
 const userSchema = new Schema<IUser>({
   userName: {
     type: String,
-    required: VALIDATION.ARRAY.REQUIRED('Username'),
+    required: VALIDATION.ARRAY.REQUIRED('"userName"'),
     unique: true,
-    minlength: VALIDATION.ARRAY.MIN_LENGTH('Username', VALIDATION.LENGTH.USERNAME_MIN),
-    maxlength: VALIDATION.ARRAY.MAX_LENGTH('Username', VALIDATION.LENGTH.USERNAME_MAX),
+    minlength: VALIDATION.ARRAY.MIN_LENGTH('"userName"', VALIDATION.LENGTH.USERNAME_MIN),
+    maxlength: VALIDATION.ARRAY.MAX_LENGTH('"userName"', VALIDATION.LENGTH.USERNAME_MAX),
     trim: true,
   },
 
@@ -35,8 +35,8 @@ const userSchema = new Schema<IUser>({
 
   fullName: {
     type: String,
-    minlength: VALIDATION.ARRAY.MIN_LENGTH('Full name', VALIDATION.LENGTH.FULL_NAME_MIN),
-    maxlength: VALIDATION.ARRAY.MAX_LENGTH('Full name', VALIDATION.LENGTH.FULL_NAME_MAX),
+    minlength: VALIDATION.ARRAY.MIN_LENGTH('"fullName"', VALIDATION.LENGTH.FULL_NAME_MIN),
+    maxlength: VALIDATION.ARRAY.MAX_LENGTH('"fullName"', VALIDATION.LENGTH.FULL_NAME_MAX),
     trim: true,
   },
 
@@ -55,10 +55,10 @@ userSchema
 userSchema.pre('validate', function (this: IUser, next) {
   if (this.isNew || this.isModified('password')) {
     if (!this._password) {
-      return next(new AppValidationError('Password is required'));
+      return next(new AppValidationError('"password" is required'));
     }
     if (!VALIDATION.PATTERN.PASSWORD.test(this._password)) {
-      return next(new AppValidationError(VALIDATION.MESSAGES.PATTERN('Password', VALIDATION.PATTERN.PASSWORD)));
+      return next(new AppValidationError(VALIDATION.MESSAGES.PATTERN('"password"', VALIDATION.PATTERN.PASSWORD)));
     }
   }
   next();
