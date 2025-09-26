@@ -6,10 +6,10 @@ import { AppError, getInstrumentIdsFromTabs, handleCommonErrors, resolveDashboar
 export class DashboardController {
   static async getDashboards(req: Request, res: Response) {
     try {
-      const dashboards = await Dashboard.find<IDashboard>({ ownerUserId: req.user.id }).select("title icon");
+      const dashboards = await Dashboard.find<IDashboard>({ ownerUserId: req.user.id }).select('title icon');
       res.json(dashboards || []);
     } catch (error) {
-      handleCommonErrors(error, res, "Get Dashboards");
+      handleCommonErrors(error, res, 'Get Dashboards');
     }
   }
 
@@ -26,7 +26,7 @@ export class DashboardController {
 
       res.status(201).json(dashboard);
     } catch (error) {
-      handleCommonErrors(error, res, "Get Dashboards");
+      handleCommonErrors(error, res, 'Get Dashboards');
     }
   }
 
@@ -37,7 +37,7 @@ export class DashboardController {
         _id: dashboardId,
         ownerUserId: req.user.id,
       });
-      if (!dashboard) throw new AppError("Dashboard not found", 404);
+      if (!dashboard) throw new AppError('Dashboard not found', 404);
 
       const instrumentIds = getInstrumentIdsFromTabs(dashboard.tabs);
 
@@ -58,7 +58,7 @@ export class DashboardController {
         })
       );
     } catch (error) {
-      handleCommonErrors(error, res, "Get Dashboard by ID");
+      handleCommonErrors(error, res, 'Get Dashboard by ID');
     }
   }
 
@@ -70,7 +70,7 @@ export class DashboardController {
         _id: req.params.dashboardId,
         ownerUserId: req.user.id,
       });
-      if (!dashboard) throw new AppError("Dashboard not found", 404);
+      if (!dashboard) throw new AppError('Dashboard not found', 404);
 
       if (tabs) {
         await UserInstrumentService.updateUserInstrumentsForDashboard({
@@ -89,7 +89,7 @@ export class DashboardController {
 
       res.status(200).json(dashboard);
     } catch (error) {
-      handleCommonErrors(error, res, "Get Dashboards");
+      handleCommonErrors(error, res, 'Get Dashboards');
     }
   }
 
@@ -100,7 +100,7 @@ export class DashboardController {
         ownerUserId: req.user.id,
       });
 
-      if (!result?.value) throw new AppError("Dashboard not found", 404);
+      if (!result?.value) throw new AppError('Dashboard not found', 404);
 
       await UserInstrumentService.removeUserInstrumentsForDashboard({
         userId: req.user.id,
@@ -109,7 +109,7 @@ export class DashboardController {
 
       res.status(204).send();
     } catch (error) {
-      handleCommonErrors(error, res, "Delete Dashboard");
+      handleCommonErrors(error, res, 'Delete Dashboard');
     }
   }
 
@@ -119,7 +119,7 @@ export class DashboardController {
 
       res.status(201).json(dashboards);
     } catch (error) {
-      handleCommonErrors(error, res, "Create Default Dashboards");
+      handleCommonErrors(error, res, 'Create Default Dashboards');
     }
   }
 }

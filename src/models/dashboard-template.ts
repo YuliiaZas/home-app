@@ -13,7 +13,7 @@ const dashboardTemplateSchema = new Schema<IDashboardTemplate>({
   isTemplate: { type: Boolean, default: true, required: true },
 });
 
-dashboardTemplateSchema.pre("validate", function (next) {
+dashboardTemplateSchema.pre('validate', function (next) {
   const duplicateTabAliasId = validateTabAliasIds(this.tabs);
   if (duplicateTabAliasId) {
     return next(new AppValidationError(`Duplicate tab aliasId "${duplicateTabAliasId}" in the same dashboard`));

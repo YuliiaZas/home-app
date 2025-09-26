@@ -7,16 +7,16 @@ export class UserInstrumentController {
     try {
       const { instrumentId } = req.params;
       const { state } = req.body;
-  
+
       const userInstrument = await UserInstrument.findOne({
         userId: req.user.id,
         instrumentId,
       });
-      if (!userInstrument) throw new AppError("User instrument not found", 404);
-  
+      if (!userInstrument) throw new AppError('User instrument not found', 404);
+
       userInstrument.state = state;
       await userInstrument.save();
-  
+
       res.status(200).json(userInstrument);
     } catch (error: unknown) {
       handleCommonErrors(error, res, 'Update Instrument State');

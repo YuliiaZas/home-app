@@ -1,5 +1,5 @@
-import mongoose from 'mongoose';
-import { Dashboard, DashboardTemplate, IDashboard, IDashboardTemplate, ITab } from '@models';
+import { startSession, Types } from 'mongoose';
+import { Dashboard, DashboardTemplate, IDashboard, IDashboardTemplate } from '@models';
 import { AppError, getInstrumentIdsFromTabs } from '@utils';
 import { UserInstrumentService } from './user-instrument.service';
 
@@ -8,12 +8,12 @@ export class DashboardService {
     const templates = await DashboardTemplate.find<IDashboardTemplate>().lean();
     if (!templates || templates.length === 0) throw new AppError('No dashboard templates found', 500);
 
-    const session = await mongoose.startSession();
+    const session = await startSession();
 
     try {
       session.startTransaction();
 
-      const dashboardsToCreate = templates.map(tpl => {
+      const dashboardsToCreate = templates.map((tpl) => {
         return new Dashboard({
           ownerUserId: userId,
           title: tpl.title,
@@ -23,20 +23,21 @@ export class DashboardService {
         });
       });
 
-      dashboardsToCreate.forEach(dashboard => {
+      dashboardsToCreate.forEach((dashboard) => {
         if (!dashboard._id) {
-          dashboard._id = new mongoose.Types.ObjectId();
+          dashboard._id = new Types.ObjectId();
         }
       });
 
       const updatedUserInstruments = await Promise.all(
-        dashboardsToCreate.map(async (d) =>
-          await UserInstrumentService.updateUserInstrumentsForDashboard({
-            userId,
-            dashboardId: d._id,
-            updatedInstrumentIds: getInstrumentIdsFromTabs(d.tabs) || [],
-            session,
-          })
+        dashboardsToCreate.map(
+          async (d) =>
+            await UserInstrumentService.updateUserInstrumentsForDashboard({
+              userId,
+              dashboardId: d._id,
+              updatedInstrumentIds: getInstrumentIdsFromTabs(d.tabs) || [],
+              session,
+            })
         )
       );
 

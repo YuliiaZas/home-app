@@ -10,18 +10,16 @@ export class UserController {
 
       const newUser = await User.create({ userName, password, fullName });
       const token = signAccessToken(newUser);
-  
-      const dashboards: { status: string, error: string | null } = {
+
+      const dashboards: { status: string; error: string | null } = {
         status: 'success',
-        error: null
+        error: null,
       };
-      
+
       try {
         await Promise.race([
           DashboardService.addDefaultDashboards(newUser._id),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Dashboard creation timeout')), 5000)
-          )
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Dashboard creation timeout')), 5000)),
         ]);
       } catch (error: unknown) {
         console.error('Dashboard creation failed:', error);
@@ -38,10 +36,10 @@ export class UserController {
   static async loginUser(req: Request, res: Response) {
     try {
       const { userName, password } = req.body;
-  
+
       const user = await User.authenticate(userName, password);
       if (!user) throw new AppAuthError('Invalid credentials');
-  
+
       const token = signAccessToken(user);
       res.json({ token });
     } catch (error: unknown) {

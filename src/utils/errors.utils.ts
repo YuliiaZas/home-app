@@ -2,14 +2,20 @@ import { Response } from 'express';
 import { MongoError } from 'mongodb';
 
 export class AppError extends Error {
-  constructor(public message: string, public statusCode: number) {
+  constructor(
+    public message: string,
+    public statusCode: number
+  ) {
     super(message);
     this.name = 'AppError';
   }
 }
 
 export class AppAuthError extends AppError {
-  constructor(public message = 'Invalid credentials', public statusCode = 401) {
+  constructor(
+    public message = 'Invalid credentials',
+    public statusCode = 401
+  ) {
     super(message, statusCode);
     this.name = 'AppAuthError';
   }
@@ -26,7 +32,7 @@ export const logAndRespond = {
   validationError: (res: Response, error: MongoError | AppValidationError, context: string) => {
     console.error(`${context} validation error:`, error.message);
     if (error.name === 'ValidationError' && 'errors' in error && error.errors) {
-      const messages = Object.values(error.errors).map((err: any) => err.message);
+      const messages = Object.values(error.errors).map((err: Error) => err.message);
       return res.status(400).json({ error: messages.join(', ') });
     }
     return res.status(400).json({ error: error.message });
@@ -50,7 +56,7 @@ export const logAndRespond = {
   customError: (res: Response, error: AppError, context: string) => {
     console.error(`${context} error:`, error.message);
     return res.status(error.statusCode).json({ error: error.message });
-  }
+  },
 };
 
 export const handleCommonErrors = (error: unknown, res: Response, context: string) => {
@@ -66,7 +72,10 @@ export const handleCommonErrors = (error: unknown, res: Response, context: strin
     return logAndRespond.validationError(res, error, context);
   }
 
-  if (error instanceof AppAuthError || (error instanceof Error && (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError'))) {
+  if (
+    error instanceof AppAuthError ||
+    (error instanceof Error && (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError'))
+  ) {
     return logAndRespond.authError(res, context, error.message);
   }
 

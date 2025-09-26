@@ -43,10 +43,10 @@ export class UserInstrumentService {
         userId,
         instrumentId,
       }).session(session);
-  
-      if (existing) {
 
-        if (!existing.dashboards.includes(dashboardId as any)) {
+      if (existing) {
+        if (!existing.dashboards.some((dId) => dId.toString() === dashboardId)) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           existing.dashboards.push(dashboardId as any);
           await existing.save({ session });
           addedInstruments++;
@@ -65,7 +65,7 @@ export class UserInstrumentService {
     return {
       dashboardId,
       addedInstruments,
-      removedInstruments: instrumentsToRemoveForDashboard.length
+      removedInstruments: instrumentsToRemoveForDashboard.length,
     };
   }
 

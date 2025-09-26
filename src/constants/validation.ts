@@ -27,6 +27,9 @@ export const VALIDATION = {
     REQUIRED: (field: string): [boolean, string] => [true, VALIDATION.MESSAGES.REQUIRED(field)],
     MIN_LENGTH: (field: string, min: number): [number, string] => [min, VALIDATION.MESSAGES.MIN_LENGTH(field, min)],
     MAX_LENGTH: (field: string, max: number): [number, string] => [max, VALIDATION.MESSAGES.MAX_LENGTH(field, max)],
-    PATTERN: (field: string, pattern: RegExp): [RegExp, string] => [pattern, VALIDATION.MESSAGES.PATTERN(field, pattern)],
-  }
+    PATTERN: (field: string, pattern: RegExp): [RegExp, string] => [
+      pattern,
+      VALIDATION.MESSAGES.PATTERN(field, pattern),
+    ],
+  },
 } as const;

@@ -1,16 +1,25 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import mongoose from 'mongoose';
+import { disconnect } from 'mongoose';
 import { connectDatabase } from '@config';
-import { Dashboard, DashboardTemplate, DashboardTemplateInput, IDashboardBaseSeed, IInstrument, Instrument, User, UserInstrument } from '@models';
+import {
+  Dashboard,
+  DashboardTemplate,
+  DashboardTemplateInput,
+  IDashboardBaseSeed,
+  IInstrument,
+  Instrument,
+  User,
+  UserInstrument,
+} from '@models';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function seed() {
   await connectDatabase();
-  
+
   // 1. Clear existing collections
   await Instrument.syncIndexes();
   await DashboardTemplate.syncIndexes();
@@ -62,7 +71,7 @@ async function seed() {
   const dashboards = await DashboardTemplate.insertMany(transformedDashboards);
   console.log(`✅ Inserted ${dashboards.length} dashboard templates`);
 
-  await mongoose.disconnect();
+  await disconnect();
   console.log('🚀 Seeding complete');
 }
 

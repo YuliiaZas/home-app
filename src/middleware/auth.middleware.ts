@@ -7,11 +7,11 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
     const authorizationHeader = req.header('Authorization')?.split(' ');
     const authorizationMethod = authorizationHeader?.[0];
     const token = authorizationHeader?.[1];
-    
+
     if (!token || authorizationMethod !== 'Bearer') {
       throw new AppAuthError('Unauthorized');
     }
-    
+
     const payload = verifyAccessToken(token);
     if (!isPayload(payload)) throw new AppAuthError('Invalid token payload');
 
