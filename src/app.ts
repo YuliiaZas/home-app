@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import express from 'express';
 import { connectDatabase } from '@config';
 import { errorHandler, notFoundHandler } from '@middleware';

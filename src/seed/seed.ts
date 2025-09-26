@@ -1,10 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import 'dotenv/config';
 import mongoose from 'mongoose';
 import { connectDatabase } from '@config';
-import { Dashboard, DashboardTemplate, DashboardTemplateInput, IDashboardBaseSeed, IInstrument, Instrument } from '@models';
+import { Dashboard, DashboardTemplate, DashboardTemplateInput, IDashboardBaseSeed, IInstrument, Instrument, User, UserInstrument } from '@models';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,6 +18,10 @@ async function seed() {
 
   await Instrument.deleteMany({});
   await DashboardTemplate.deleteMany({});
+
+  await User.deleteMany({});
+  await UserInstrument.deleteMany({});
+  await Dashboard.deleteMany({});
 
   // 2. Load JSON files
   const instrumentsPath = path.join(__dirname, 'data', 'instruments.db.json');

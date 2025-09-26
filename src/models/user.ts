@@ -1,7 +1,6 @@
-import bcrypt from 'bcrypt';
 import { VALIDATION } from '@constants';
 import { Schema, model, Document, Model } from 'mongoose';
-import { AppValidationError } from '@utils';
+import { AppValidationError, hashPassword, verifyPassword } from '@utils';
 
 export interface IUserInput {
   userName: string;
@@ -67,17 +66,14 @@ userSchema.pre('validate', function(this: IUser, next) {
 });
 
 userSchema.pre('save', async function(this: IUser, next) {
-  // Only hash password if it's modified or new
+  // Hash password only if it's modified or new
   if (!this.isModified('password') && !this._password) {
     return next();
   }
 
   try {
-    const saltRounds = 12;
-    const hashedPassword = await bcrypt.hash(this._password!, saltRounds);
-    this.passwordHash = hashedPassword;
-    
-    // Clear the plain text password!!!
+    this.passwordHash = await hashPassword(this._password!);
+    // Clear the plain text password
     this._password = undefined;
     next();
   } catch (error) {
@@ -89,7 +85,7 @@ userSchema.statics.authenticate = async function(userName: string, password: str
   const user: IUser = await this.findOne<IUser>({ userName: new RegExp(`^${userName}$`, "i") }).select('+passwordHash');
   if (!user) return null;
 
-  const isMatch = await bcrypt.compare(password, user.passwordHash);
+  const isMatch = await verifyPassword(password, user.passwordHash);
   if (!isMatch) return null;
 
   return user.toObject();
