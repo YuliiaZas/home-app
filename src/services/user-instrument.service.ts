@@ -1,4 +1,5 @@
-import { ClientSession } from 'mongoose';
+import mongodb from 'mongodb';
+import mongoose, { ClientSession, Types } from 'mongoose';
 import { IUserInstrument, UserInstrument } from '@models';
 
 export class UserInstrumentService {
@@ -13,6 +14,9 @@ export class UserInstrumentService {
     updatedInstrumentIds: string[];
     session?: ClientSession | null;
   }): Promise<{ dashboardId: string; addedInstruments: number; removedInstruments: number }> {
+    console.log(updatedInstrumentIds.length)
+    const dashboardObjectId = new Types.ObjectId(dashboardId);
+
     const existingUserInstruments: IUserInstrument[] = await UserInstrument.find({
       userId,
       dashboards: dashboardId,
@@ -20,70 +24,77 @@ export class UserInstrumentService {
 
     const existingUserInstrumentsIds = existingUserInstruments.map((ui) => ui.instrumentId.toString());
 
-    const instrumentsToRemoveForDashboard = existingUserInstruments.filter(
-      (existingUserInstrument) => !updatedInstrumentIds.includes(existingUserInstrument.instrumentId.toString())
-    );
+    const bulkOptions: mongodb.AnyBulkWriteOperation[] = [];
+    let addedInstruments = 0;
+    let removedInstruments = 0;
 
-    for (const userInstrument of instrumentsToRemoveForDashboard) {
-      userInstrument.dashboards = userInstrument.dashboards.filter((dId) => dId.toString() !== dashboardId.toString());
-      if (userInstrument.dashboards.length === 0) {
-        await UserInstrument.deleteOne({ _id: userInstrument._id }, { session });
-      } else {
-        await userInstrument.save({ session });
+    for (const userInstrument of existingUserInstruments) {
+      if (!updatedInstrumentIds.includes(userInstrument.instrumentId.toString())) {
+        bulkOptions.push(this.getRemovingOptionsForDashboardUserInstrument(dashboardObjectId, userInstrument));
+        removedInstruments++;
       }
     }
 
-    const instrumentIdsToAdd = updatedInstrumentIds.filter(
-      (instrumentId) => !existingUserInstrumentsIds.includes(instrumentId)
-    );
-    let addedInstruments = 0;
-
-    for (const instrumentId of instrumentIdsToAdd) {
-      const existing = await UserInstrument.findOne({
-        userId,
-        instrumentId,
-      }).session(session);
-
-      if (existing) {
-        if (!existing.dashboards.some((dId) => dId.toString() === dashboardId)) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          existing.dashboards.push(dashboardId as any);
-          await existing.save({ session });
-          addedInstruments++;
-        }
-      } else {
-        const newUserInstrument = new UserInstrument({
-          userId,
-          instrumentId,
-          dashboards: [dashboardId],
+    for (const instrumentId of updatedInstrumentIds) {
+      const instrumentObjectId = new Types.ObjectId(instrumentId);
+      if (!existingUserInstrumentsIds.includes(instrumentId)) {
+        bulkOptions.push({
+          updateOne: {
+            filter: { userId, instrumentId: instrumentObjectId },
+            update: { $addToSet: { dashboards: dashboardObjectId } as mongoose.mongo.BSON.Document },
+            upsert: true,
+          },
         });
-        await newUserInstrument.save({ session });
         addedInstruments++;
       }
+    }
+
+    if (bulkOptions.length > 0) {
+      await UserInstrument.bulkWrite(bulkOptions, { session: session || undefined });
     }
 
     return {
       dashboardId,
       addedInstruments,
-      removedInstruments: instrumentsToRemoveForDashboard.length,
+      removedInstruments,
     };
   }
 
   static async removeUserInstrumentsForDashboard({ userId, dashboardId }: { userId: string; dashboardId: string }) {
+    const dashboardObjectId = new Types.ObjectId(dashboardId);
+
     const userInstrumentsForDashboard = await UserInstrument.find<IUserInstrument>({
       userId,
       dashboards: dashboardId,
     });
 
-    await Promise.all(
-      userInstrumentsForDashboard.map(async (userInstrument) => {
-        userInstrument.dashboards = userInstrument.dashboards.filter((dId) => dId.toString() !== dashboardId);
-        if (userInstrument.dashboards.length === 0) {
-          await UserInstrument.deleteOne({ _id: userInstrument._id });
-        } else {
-          await userInstrument.save();
-        }
-      })
-    );
+    const bulkOptions: mongodb.AnyBulkWriteOperation[] = [];
+
+    for (const userInstrument of userInstrumentsForDashboard) {
+      bulkOptions.push(this.getRemovingOptionsForDashboardUserInstrument(dashboardObjectId, userInstrument));
+    }
+
+    if (bulkOptions.length > 0) {
+      await UserInstrument.bulkWrite(bulkOptions);
+    }
+  }
+
+  static getRemovingOptionsForDashboardUserInstrument(
+    dashboardObjectId: Types.ObjectId,
+    userInstrument: IUserInstrument
+  ): mongodb.AnyBulkWriteOperation {
+    if (userInstrument.dashboards.length === 1) {
+      return {
+        deleteOne: {
+          filter: { _id: userInstrument._id },
+        },
+      };
+    }
+    return {
+      updateOne: {
+        filter: { _id: userInstrument._id},
+        update: { $pull: { dashboards: dashboardObjectId } as mongoose.mongo.BSON.Document }
+      },
+    };
   }
 }
