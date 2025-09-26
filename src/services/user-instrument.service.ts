@@ -1,55 +1,72 @@
-import { Instrument, IUserInstrument, UserInstrument } from '@models';
-import { AppError } from '@utils';
+import { ClientSession } from 'mongoose';
+import { IUserInstrument, UserInstrument } from '@models';
 
 export class UserInstrumentService {
   static async updateUserInstrumentsForDashboard({
     userId,
     dashboardId,
-    currentUserInstruments,
+    updatedInstrumentIds,
+    session = null,
   }: {
     userId: string;
     dashboardId: string;
-    currentUserInstruments: string[];
-  }) {
-    const userInstrumentsForDashboard: IUserInstrument[] = await UserInstrument.find({
+    updatedInstrumentIds: string[];
+    session?: ClientSession | null;
+  }): Promise<{ dashboardId: string; addedInstruments: number; removedInstruments: number }> {
+    const existingUserInstruments: IUserInstrument[] = await UserInstrument.find({
       userId,
       dashboards: dashboardId,
-    });
+    }).session(session);
 
-    const instrumentsToRemove = userInstrumentsForDashboard.filter(
-      (userInstrument) => !currentUserInstruments.includes(userInstrument.instrumentId.toString())
+    const existingUserInstrumentsIds = existingUserInstruments.map((ui) => ui.instrumentId.toString());
+
+    const instrumentsToRemoveForDashboard = existingUserInstruments.filter(
+      (existingUserInstrument) => !updatedInstrumentIds.includes(existingUserInstrument.instrumentId.toString())
     );
 
-    for (const userInstrument of instrumentsToRemove) {
+    for (const userInstrument of instrumentsToRemoveForDashboard) {
       userInstrument.dashboards = userInstrument.dashboards.filter((dId) => dId.toString() !== dashboardId.toString());
       if (userInstrument.dashboards.length === 0) {
-        await UserInstrument.deleteOne({ _id: userInstrument._id });
+        await UserInstrument.deleteOne({ _id: userInstrument._id }, { session });
       } else {
-        await userInstrument.save();
+        await userInstrument.save({ session });
       }
     }
 
-    const instrumentIdsToAdd = currentUserInstruments.filter(
-      (id) => !userInstrumentsForDashboard.some((userInstrument) => userInstrument.instrumentId.toString() === id)
+    const instrumentIdsToAdd = updatedInstrumentIds.filter(
+      (instrumentId) => !existingUserInstrumentsIds.includes(instrumentId)
     );
+    let addedInstruments = 0;
 
     for (const instrumentId of instrumentIdsToAdd) {
-      const globalInstrument = await Instrument.findOne({
-        id: instrumentId,
-      }).lean();
-      if (!globalInstrument) {
-        throw new AppError(`Instrument with id ${instrumentId} not found`, 400);
-      }
-
-      const newUserInstrument = new UserInstrument({
+      const existing = await UserInstrument.findOne({
         userId,
         instrumentId,
-        dashboards: [dashboardId],
-        ...(globalInstrument.type === 'device' ? { state: globalInstrument.state ?? false } : {}),
-        ...(globalInstrument.type === 'sensor' ? { value: globalInstrument.value } : {}),
-      });
-      await newUserInstrument.save();
+      }).session(session);
+  
+      if (existing) {
+
+        if (!existing.dashboards.includes(dashboardId as any)) {
+          existing.dashboards.push(dashboardId as any);
+          await existing.save({ session });
+          addedInstruments++;
+        }
+      } else {
+        const newUserInstrument = new UserInstrument({
+          userId,
+          instrumentId,
+          dashboards: [dashboardId],
+        });
+        await newUserInstrument.save({ session });
+        addedInstruments++;
+      }
     }
+
+    return {
+      dashboardId,
+      addedInstruments,
+      removedInstruments: instrumentsToRemoveForDashboard.length
+    };
   }
 
   static async removeUserInstrumentsForDashboard({ userId, dashboardId }: { userId: string; dashboardId: string }) {
@@ -58,13 +75,15 @@ export class UserInstrumentService {
       dashboards: dashboardId,
     });
 
-    userInstrumentsForDashboard.forEach(async (userInstrument) => {
-      userInstrument.dashboards = userInstrument.dashboards.filter((dId) => dId.toString() !== dashboardId);
-      if (userInstrument.dashboards.length === 0) {
-        await UserInstrument.deleteOne({ _id: userInstrument._id });
-      } else {
-        await userInstrument.save();
-      }
-    });
+    await Promise.all(
+      userInstrumentsForDashboard.map(async (userInstrument) => {
+        userInstrument.dashboards = userInstrument.dashboards.filter((dId) => dId.toString() !== dashboardId);
+        if (userInstrument.dashboards.length === 0) {
+          await UserInstrument.deleteOne({ _id: userInstrument._id });
+        } else {
+          await userInstrument.save();
+        }
+      })
+    );
   }
 }

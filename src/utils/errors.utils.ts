@@ -32,9 +32,9 @@ export const logAndRespond = {
     return res.status(400).json({ error: error.message });
   },
 
-  duplicateError: (res: Response, error: MongoError, context: string, field: string) => {
+  duplicateError: (res: Response, error: MongoError, context: string) => {
     console.error(`${context} duplicate key error`, error);
-    return res.status(409).json({ error: `${field} already taken` });
+    return res.status(409).json({ error: error.message || 'Duplicate key error collection' });
   },
 
   authError: (res: Response, context: string, errorMessage?: string) => {
@@ -58,9 +58,8 @@ export const handleCommonErrors = (error: unknown, res: Response, context: strin
     return logAndRespond.customError(res, error, context);
   }
 
-  if (error instanceof MongoError && error.code === 11000 && 'keyValue' in error) {
-    const field = `{ ${Object.entries(error.keyValue || {})[0].join(': ')} }` || 'Field';
-    return logAndRespond.duplicateError(res, error, context, field);
+  if (error instanceof MongoError && error.code === 11000) {
+    return logAndRespond.duplicateError(res, error, context);
   }
 
   if ((error instanceof Error && error.name === 'ValidationError') || error instanceof AppValidationError) {

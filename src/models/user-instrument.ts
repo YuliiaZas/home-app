@@ -11,7 +11,7 @@ export interface IUserInstrument extends Document {
   state?: boolean;
   value?: {
     amount: number | string | boolean;
-    unit: string;
+    unit: string | null;
   };
 }
 
@@ -49,7 +49,24 @@ userInstrumentSchema.pre("validate", async function (next) {
   const instrument = await Instrument.findById<IInstrument>(this.instrumentId);
 
   if (!instrument) {
-    return next(new AppError("Invalid instrument reference", 404));
+    return next(new AppError(`Invalid instrument reference ${this.instrumentId}`, 404));
+  }
+
+  if (instrument.type === "device") {
+    if (this.state === undefined) {
+      this.state = instrument.state ?? false;
+    }
+    this.value = undefined;
+  }
+
+  if (instrument.type === "sensor") {
+    if (this.value === undefined || this.value.amount === undefined) {
+      this.value = {
+        amount: instrument.value?.amount ?? 0,
+        unit: instrument.value?.unit ?? null
+      };
+    }
+    this.state = undefined;
   }
 
   const error = validateInstrumentData(instrument.type, instrument.state, instrument.value);

@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { Dashboard, IDashboard, IInstrument, Instrument, IUserInstrument, UserInstrument } from '@models';
-import { DashboardService, InstrumentService, UserInstrumentService } from '@services';
-import { AppError, handleCommonErrors, resolveDashboard } from '@utils';
+import { DashboardService, UserInstrumentService } from '@services';
+import { AppError, getInstrumentIdsFromTabs, handleCommonErrors, resolveDashboard } from '@utils';
 
 export class DashboardController {
   static async getDashboards(req: Request, res: Response) {
@@ -39,7 +39,7 @@ export class DashboardController {
       });
       if (!dashboard) throw new AppError("Dashboard not found", 404);
 
-      const instrumentIds = InstrumentService.getInstrumentsFromTabs(dashboard.tabs);
+      const instrumentIds = getInstrumentIdsFromTabs(dashboard.tabs);
 
       const instruments = await Instrument.find<IInstrument>({
         _id: { $in: instrumentIds },
@@ -73,17 +73,10 @@ export class DashboardController {
       if (!dashboard) throw new AppError("Dashboard not found", 404);
 
       if (tabs) {
-        const validationError = await InstrumentService.validateInstrumentsInTabs(tabs);
-        if (validationError) {
-          throw new AppError(`Dashboards not updated due to invalid instrument IDs: ${validationError.invalidIds?.join(', ')}`, 400);
-        }
-
-        const currentUserInstruments = InstrumentService.getInstrumentsFromTabs(tabs);
-
         await UserInstrumentService.updateUserInstrumentsForDashboard({
           userId: req.user.id,
           dashboardId: dashboard._id,
-          currentUserInstruments,
+          updatedInstrumentIds: getInstrumentIdsFromTabs(tabs),
         });
 
         dashboard.tabs = tabs;

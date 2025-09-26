@@ -1,6 +1,6 @@
 import { Document, Schema, SchemaDefinition, model } from 'mongoose';
 import { VALIDATION } from '@constants';
-import { AppValidationError } from '@utils';
+import { AppValidationError, validateTabAliasIds } from '@utils';
 
 export interface IDashboard extends IDashboardInput, Document {}
 
@@ -116,14 +116,9 @@ dashboardSchema.index(
 );
 
 dashboardSchema.pre("validate", function (next) {
-  const tabAliasIds = new Set();
-  for (const tab of this.tabs) {
-    if (tab.aliasId) {
-      if (tabAliasIds.has(tab.aliasId)) {
-        return next(new AppValidationError(`Duplicate tab aliasId "${tab.aliasId}" in the same dashboard`));
-      }
-      tabAliasIds.add(tab.aliasId);
-    }
+  const duplicateTabAliasId = validateTabAliasIds(this.tabs);
+  if (duplicateTabAliasId) {
+    return next(new AppValidationError(`Duplicate tab aliasId "${duplicateTabAliasId}" in the same dashboard`));
   }
   next();
 });

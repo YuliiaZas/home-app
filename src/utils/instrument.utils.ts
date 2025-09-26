@@ -1,4 +1,5 @@
-import { IInstrument } from "@models";
+import { IInstrument, ITab } from "@models";
+import { AppError } from "./errors.utils";
 
 export function validateInstrumentData(
   type: IInstrument["type"],
@@ -30,4 +31,12 @@ export function validateInstrumentData(
   }
 
   return null;
+}
+
+export function getInstrumentIdsFromTabs(tabs: ITab[]): string[] {
+  try {
+    return tabs.flatMap((tab) => tab.cards.flatMap((card) => card.items));
+  } catch (error) {
+    throw new AppError("Invalid tabs format", 400);
+  }
 }

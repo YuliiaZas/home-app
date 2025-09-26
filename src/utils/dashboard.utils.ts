@@ -32,3 +32,16 @@ export function resolveDashboard({
 
   return resolved;
 }
+
+export function validateTabAliasIds(tabs: ITab[]): string | null {
+  const aliasIdSet = new Set<string>();
+  for (const tab of tabs) {
+    if (tab.aliasId) {
+      if (aliasIdSet.has(tab.aliasId)) {
+        return tab.aliasId;
+      }
+      aliasIdSet.add(tab.aliasId);
+    }
+  }
+  return null;
+}
