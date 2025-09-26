@@ -3,17 +3,17 @@ import { VALIDATION } from '@constants';
 import { Schema, model, Document, Model } from 'mongoose';
 import { AppValidationError } from '@utils';
 
-export interface IUser extends Document {
+export interface IUserInput {
   userName: string;
   passwordHash: string;
   fullName: string;
   tokenVersion: number;
-  comparePassword(candidatePassword: string): Promise<boolean>;
-  password?: string; // Virtual field for plain text password
+  _password?: string; // Virtual field for plain text password
 }
+export interface IUser extends IUserInput, Document {}
 
 export interface IUserModel extends Model<IUser> {
-  findByName(userName: string): Promise<IUser | null>;
+  authenticate(userName: string, password: string): Promise<IUser | null>;
 }
 
 const userSchema = new Schema<IUser>({
@@ -28,7 +28,9 @@ const userSchema = new Schema<IUser>({
 
   passwordHash: { 
     type: String,
-    required: true,
+    required: function(this: IUser) {
+      return !this._password;
+    },
     select: false
   },
 
@@ -44,18 +46,18 @@ const userSchema = new Schema<IUser>({
 
 userSchema.virtual('password')
   .set(function(this: IUser, password: string) {
-    this.password = password;
+    this._password = password;
   })
   .get(function(this: IUser) {
-    return this.password;
+    return this._password;
   });
 
 userSchema.pre('validate', function(this: IUser, next) {
   if (this.isNew || this.isModified('password')) {
-    if (!this.password) {
+    if (!this._password) {
       return next(new AppValidationError("Password is required"));
     }
-    if (!VALIDATION.PATTERN.PASSWORD.test(this.password)) {
+    if (!VALIDATION.PATTERN.PASSWORD.test(this._password)) {
       return next(new AppValidationError(
         VALIDATION.MESSAGES.PATTERN('Password', VALIDATION.PATTERN.PASSWORD)
       ));
@@ -66,29 +68,31 @@ userSchema.pre('validate', function(this: IUser, next) {
 
 userSchema.pre('save', async function(this: IUser, next) {
   // Only hash password if it's modified or new
-  if (!this.isModified('password') && !this.password) {
+  if (!this.isModified('password') && !this._password) {
     return next();
   }
 
   try {
     const saltRounds = 12;
-    const hashedPassword = await bcrypt.hash(this.password!, saltRounds);
+    const hashedPassword = await bcrypt.hash(this._password!, saltRounds);
     this.passwordHash = hashedPassword;
     
     // Clear the plain text password!!!
-    this.password = undefined;
+    this._password = undefined;
     next();
   } catch (error) {
     next(error as Error);
   }
 });
 
-userSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
-  return bcrypt.compare(candidatePassword, this.passwordHash);
-};
+userSchema.statics.authenticate = async function(userName: string, password: string): Promise<IUser | null> {
+  const user: IUser = await this.findOne<IUser>({ userName: new RegExp(`^${userName}$`, "i") }).select('+passwordHash');
+  if (!user) return null;
 
-userSchema.statics.findByName = function (userName: string) {
-  return this.findOne({ userName: new RegExp(`^${userName}$`, "i") });
+  const isMatch = await bcrypt.compare(password, user.passwordHash);
+  if (!isMatch) return null;
+
+  return user.toObject();
 };
 
 userSchema.virtual("computedInitials").get(function (this: IUser) {
@@ -103,10 +107,18 @@ userSchema.set("toJSON", {
   transform: (_, returnedUser) => {
     returnedUser.initials = returnedUser.computedInitials;
     delete returnedUser.passwordHash;
-    delete returnedUser.password;
+    delete returnedUser._password;
     return returnedUser;
   },
 });
 
+userSchema.set('toObject', {
+  virtuals: false,
+  transform: (_, returnedUser) => {
+    delete returnedUser.passwordHash;
+    delete returnedUser._password;
+    return returnedUser;
+  },
+});
 
 export const User = model<IUser, IUserModel>('User', userSchema);

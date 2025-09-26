@@ -8,6 +8,13 @@ export class AppError extends Error {
   }
 }
 
+export class AppAuthError extends AppError {
+  constructor(public message = 'Invalid credentials', public statusCode = 401) {
+    super(message, statusCode);
+    this.name = 'AppAuthError';
+  }
+}
+
 export class AppValidationError extends Error {
   constructor(public message: string) {
     super(message);
@@ -15,30 +22,27 @@ export class AppValidationError extends Error {
   }
 }
 
-// export const handleAsyncError = (fn: Function) => {
-//   return (req: any, res: Response, next: Function) => {
-//     Promise.resolve(fn(req, res, next)).catch(next);
-//   };
-// };
-
 export const logAndRespond = {
-  validationError: (res: Response, error: any, context: string) => {
+  validationError: (res: Response, error: MongoError | AppValidationError, context: string) => {
     console.error(`${context} validation error:`, error.message);
-    const messages = Object.values(error.errors).map((err: any) => err.message);
-    return res.status(400).json({ error: messages.join(', ') });
+    if (error.name === 'ValidationError' && 'errors' in error && error.errors) {
+      const messages = Object.values(error.errors).map((err: any) => err.message);
+      return res.status(400).json({ error: messages.join(', ') });
+    }
+    return res.status(400).json({ error: error.message });
   },
 
-  duplicateError: (res: Response, context: string, field = 'Username') => {
-    console.error(`${context} duplicate key error`);
+  duplicateError: (res: Response, error: MongoError, context: string, field: string) => {
+    console.error(`${context} duplicate key error`, error);
     return res.status(409).json({ error: `${field} already taken` });
   },
 
-  authError: (res: Response, context: string) => {
-    console.error(`${context} authentication error`);
-    return res.status(401).json({ error: 'Invalid credentials' });
+  authError: (res: Response, context: string, errorMessage?: string) => {
+    console.error(`${context} authentication error`, errorMessage || '');
+    return res.status(401).json({ error: errorMessage || 'Invalid credentials' });
   },
 
-  serverError: (res: Response, error: any, context: string) => {
+  serverError: (res: Response, error: unknown, context: string) => {
     console.error(`${context} error:`, error);
     return res.status(500).json({ error: 'Internal server error' });
   },
@@ -54,12 +58,17 @@ export const handleCommonErrors = (error: unknown, res: Response, context: strin
     return logAndRespond.customError(res, error, context);
   }
 
-  if (error instanceof MongoError && error.code === 11000) {
-    return logAndRespond.duplicateError(res, context);
+  if (error instanceof MongoError && error.code === 11000 && 'keyValue' in error) {
+    const field = `{ ${Object.entries(error.keyValue || {})[0].join(': ')} }` || 'Field';
+    return logAndRespond.duplicateError(res, error, context, field);
   }
 
-  if ((error instanceof MongoError && error.name === 'ValidationError') || error instanceof AppValidationError) {
+  if ((error instanceof Error && error.name === 'ValidationError') || error instanceof AppValidationError) {
     return logAndRespond.validationError(res, error, context);
+  }
+
+  if (error instanceof AppAuthError || (error instanceof Error && (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError'))) {
+    return logAndRespond.authError(res, context, error.message);
   }
 
   return logAndRespond.serverError(res, error, context);

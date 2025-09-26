@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { User } from '@models';
-import { AppError, handleCommonErrors, isPayload, verifyAccessToken } from '@utils';
+import { AppAuthError, handleCommonErrors, isPayload, verifyAccessToken } from '@utils';
 
 export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -9,17 +9,17 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
     const token = authorizationHeader?.[1];
     
     if (!token || authorizationMethod !== 'Bearer') {
-      throw new AppError('Unauthorized', 401);
+      throw new AppAuthError('Unauthorized');
     }
     
     const payload = verifyAccessToken(token);
-    if (!isPayload(payload)) throw new AppError('Invalid token payload', 401);
+    if (!isPayload(payload)) throw new AppAuthError('Invalid token payload');
 
     const user = await User.findById(payload.sub);
 
-    if (!user || user.tokenVersion !== payload.v) throw new AppError('Invalid token', 401);
+    if (!user || user.tokenVersion !== payload.v) throw new AppAuthError('Invalid token');
 
-    req.user = { id: user.id, userName: user.userName };
+    req.user = { id: user._id, userName: user.userName };
     next();
   } catch (error: unknown) {
     handleCommonErrors(error, res, 'Authorization');

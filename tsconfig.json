@@ -12,6 +12,7 @@
     "typeRoots": ["./types", "./node_modules/@types"],
     "baseUrl": "./",
     "paths": {
+      "@config": ["src/config"],
       "@controllers": ["src/controllers"],
       "@middleware": ["src/middleware"],
       "@models": ["src/models"],

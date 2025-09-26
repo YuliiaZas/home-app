@@ -7,7 +7,7 @@
       "amount": 18.5,
       "unit": "°C"
     },
-    "alias": "temperature-outside"
+    "aliasId": "temperature-outside"
   },
   {
     "type": "sensor",
@@ -17,7 +17,7 @@
       "amount": 72,
       "unit": "%"
     },
-    "alias": "humidity-outside"
+    "aliasId": "humidity-outside"
   },
   {
     "type": "sensor",
@@ -27,7 +27,7 @@
       "amount": "clear",
       "unit": null
     },
-    "alias": "weather"
+    "aliasId": "weather"
   },
   {
     "type": "sensor",
@@ -37,7 +37,7 @@
       "amount": 520,
       "unit": "ppm"
     },
-    "alias": "co2-1"
+    "aliasId": "co2-1"
   },
   {
     "type": "sensor",
@@ -47,7 +47,7 @@
       "amount": 45,
       "unit": "%"
     },
-    "alias": "humidity-1"
+    "aliasId": "humidity-1"
   },
   {
     "type": "sensor",
@@ -57,21 +57,21 @@
       "amount": true,
       "unit": null
     },
-    "alias": "motion-outside"
+    "aliasId": "motion-outside"
   },
   {
     "type": "device",
     "icon": "lightbulb_circle",
     "label": "Floor Lamp",
     "state": true,
-    "alias": "floor-lamp"
+    "aliasId": "floor-lamp"
   },
   {
     "type": "device",
     "icon": "power",
     "label": "TV Socket",
     "state": false,
-    "alias": "tv"
+    "aliasId": "tv"
   },
   {
     "type": "sensor",
@@ -81,7 +81,7 @@
       "amount": 23.5,
       "unit": "°C"
     },
-    "alias": "temperature-1"
+    "aliasId": "temperature-1"
   },
   {
     "type": "sensor",
@@ -91,49 +91,49 @@
       "amount": 610,
       "unit": "ppm"
     },
-    "alias": "co2-0"
+    "aliasId": "co2-0"
   },
   {
     "type": "device",
     "icon": "light",
     "label": "Ceiling Light Kitchen",
     "state": true,
-    "alias": "ceiling-light-kitchen"
+    "aliasId": "ceiling-light-kitchen"
   },
   {
     "type": "device",
     "icon": "light",
     "label": "Ceiling Light Master Bedroom",
     "state": false,
-    "alias": "ceiling-light-master-bedroom"
+    "aliasId": "ceiling-light-master-bedroom"
   },
   {
     "type": "device",
     "icon": "lightbulb_circle",
     "label": "Chandelier",
     "state": true,
-    "alias": "chandelier"
+    "aliasId": "chandelier"
   },
   {
     "type": "device",
     "icon": "lightbulb",
     "label": "Main Light",
     "state": true,
-    "alias": "main-light"
+    "aliasId": "main-light"
   },
   {
     "type": "device",
     "icon": "lightbulb",
     "label": "Basement Light",
     "state": true,
-    "alias": "basement-light"
+    "aliasId": "basement-light"
   },
   {
     "type": "device",
     "icon": "light",
     "label": "Ceiling Light Bedroom 2",
     "state": false,
-    "alias": "ceiling-light-bedroom-2"
+    "aliasId": "ceiling-light-bedroom-2"
   },
   {
     "type": "sensor",
@@ -143,7 +143,7 @@
       "amount": 2.5,
       "unit": "kWh"
     },
-    "alias": "power-total"
+    "aliasId": "power-total"
   },
   {
     "type": "sensor",
@@ -153,7 +153,7 @@
       "amount": true,
       "unit": null
     },
-    "alias": "peak-hour"
+    "aliasId": "peak-hour"
   },
   {
     "type": "sensor",
@@ -163,7 +163,7 @@
       "amount": 0.8,
       "unit": "kWh"
     },
-    "alias": "power-living-room"
+    "aliasId": "power-living-room"
   },
   {
     "type": "sensor",
@@ -173,7 +173,7 @@
       "amount": 0.5,
       "unit": "kWh"
     },
-    "alias": "power-kitchen"
+    "aliasId": "power-kitchen"
   },
   {
     "type": "sensor",
@@ -183,7 +183,7 @@
       "amount": 1.2,
       "unit": "kWh"
     },
-    "alias": "power-heater"
+    "aliasId": "power-heater"
   },
   {
     "type": "sensor",
@@ -193,7 +193,7 @@
       "amount": 21.0,
       "unit": "°C"
     },
-    "alias": "temperature-2"
+    "aliasId": "temperature-2"
   },
   {
     "type": "sensor",
@@ -203,7 +203,7 @@
       "amount": 40,
       "unit": "%"
     },
-    "alias": "humidity-0"
+    "aliasId": "humidity-0"
   },
   {
     "type": "sensor",
@@ -213,7 +213,7 @@
       "amount": 22.8,
       "unit": "°C"
     },
-    "alias": "temperature-0"
+    "aliasId": "temperature-0"
   },
   {
     "type": "sensor",
@@ -223,21 +223,21 @@
       "amount": 460,
       "unit": "ppm"
     },
-    "alias": "co2-2"
+    "aliasId": "co2-2"
   },
   {
     "type": "device",
     "icon": "door_front",
     "label": "Door Lock",
     "state": true,
-    "alias": "lock"
+    "aliasId": "lock"
   },
   {
     "type": "device",
     "icon": "videocam",
     "label": "Camera Front",
     "state": true,
-    "alias": "camera"
+    "aliasId": "camera"
   },
   {
     "type": "sensor",
@@ -247,7 +247,7 @@
       "amount": false,
       "unit": null
     },
-    "alias": "motion-1"
+    "aliasId": "motion-1"
   },
   {
     "type": "sensor",
@@ -257,13 +257,13 @@
       "amount": false,
       "unit": null
     },
-    "alias": "motion-0"
+    "aliasId": "motion-0"
   },
   {
     "type": "device",
     "icon": "notifications_active",
     "label": "Main Alarm",
     "state": false,
-    "alias": "alarm"
+    "aliasId": "alarm"
   }
 ]

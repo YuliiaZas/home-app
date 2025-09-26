@@ -1,12 +1,12 @@
+import { Document, Schema, model } from 'mongoose';
 import { VALIDATION } from '@constants';
 import { AppValidationError, validateInstrumentData } from '@utils';
-import { Document, Schema, model } from 'mongoose';
 
 export interface IInstrument extends Document {
   type: 'sensor' | 'device';
   icon: string;
   label: string;
-  alias?: string;
+  aliasId?: string;
   state?: boolean;
   value?: {
     amount: number | string | boolean;
@@ -40,11 +40,10 @@ const instrumentSchema = new Schema<IInstrument>({
     trim: true,
   },
 
-  alias: { 
+  aliasId: { 
     type: String, 
-    unique: true,
-    maxlength: VALIDATION.ARRAY.MAX_LENGTH("Alias", VALIDATION.LENGTH.ALIAS_MAX),
-    match: VALIDATION.ARRAY.PATTERN("Alias", VALIDATION.PATTERN.ALIAS),
+    maxlength: VALIDATION.ARRAY.MAX_LENGTH("Alias Id", VALIDATION.LENGTH.ALIAS_ID_MAX),
+    match: VALIDATION.ARRAY.PATTERN("Alias Id", VALIDATION.PATTERN.ALIAS_ID),
     trim: true,
   },
 
@@ -59,6 +58,11 @@ const instrumentSchema = new Schema<IInstrument>({
     },
   },
 });
+
+instrumentSchema.index(
+  { aliasId: 1 },
+  { unique: true, partialFilterExpression: { aliasId: { $exists: true } } }
+);
 
 instrumentSchema.pre("validate", function (next) {
   const error = validateInstrumentData(this.type, this.state, this.value);

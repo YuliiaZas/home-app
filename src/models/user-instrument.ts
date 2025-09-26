@@ -1,11 +1,12 @@
+import { Document, Schema, model } from 'mongoose';
 import { VALIDATION } from '@constants';
 import { IInstrument } from '@models';
 import { AppError, AppValidationError, validateInstrumentData } from '@utils';
-import { Document, Schema, model } from 'mongoose';
 
 export interface IUserInstrument extends Document {
   userId: Schema.Types.ObjectId;
   instrumentId: Schema.Types.ObjectId;
+  aliasLabel?: string;
   dashboards: Schema.Types.ObjectId[];
   state?: boolean;
   value?: {
@@ -14,13 +15,19 @@ export interface IUserInstrument extends Document {
   };
 }
 
-const userInstrumentSchema = new Schema({
+const userInstrumentSchema = new Schema<IUserInstrument>({
   userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
 
   instrumentId: {
     type: Schema.Types.ObjectId,
     ref: 'Instrument',
     required: true,
+  },
+
+  aliasLabel: { 
+    type: String, 
+    maxlength: VALIDATION.ARRAY.MAX_LENGTH("Alias Id", VALIDATION.LENGTH.ALIAS_MAX),
+    trim: true,
   },
 
   dashboards: [{ type: Schema.Types.ObjectId, ref: 'Dashboard' }],

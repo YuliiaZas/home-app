@@ -1,8 +1,8 @@
 import 'dotenv/config';
 import express from 'express';
-import connectDatabase from './config/database';
-import { errorHandler, notFoundHandler } from './middleware/index';
-import routes from './routes/index';
+import { connectDatabase } from '@config';
+import { errorHandler, notFoundHandler } from '@middleware';
+import routes from '@routes';
 
 const app = express();
 const PORT = process.env.PORT || 3000;

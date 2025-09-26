@@ -6,8 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "tsx src/app.ts",
+    "dev": "tsx watch src/app.ts",
     "build": "tsc",
-    "dev": "ts-node-dev src/app.ts",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "format": "prettier --write src/**/*.ts"

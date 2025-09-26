@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { User } from '@models';
-import { handleCommonErrors, logAndRespond, signAccessToken } from '@utils';
+import { AppAuthError, handleCommonErrors, signAccessToken } from '@utils';
 import { DashboardService } from '@services';
 
 export class UserController {
@@ -9,13 +9,29 @@ export class UserController {
       const { userName, password, fullName } = req.body;
 
       const newUser = await User.create({ userName, password, fullName });
-  
-      await DashboardService.addDefaultDashboards(newUser._id);
-  
       const token = signAccessToken(newUser);
-      res.json({ token });
+  
+      const dashboards: { status: string, error: string | null } = {
+        status: 'success',
+        error: null
+      };
+      
+      try {
+        await Promise.race([
+          DashboardService.addDefaultDashboards(newUser._id),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Dashboard creation timeout')), 5000)
+          )
+        ]);
+      } catch (error: unknown) {
+        console.error('Dashboard creation failed:', error);
+        dashboards.status = 'failed';
+        dashboards.error = error instanceof Error ? error.message : 'Unknown error occurred';
+      }
+
+      res.status(201).json({ token, dashboards });
     } catch (error: unknown) {
-      handleCommonErrors(error, res, 'Login');
+      handleCommonErrors(error, res, 'Registration');
     }
   }
 
@@ -23,11 +39,8 @@ export class UserController {
     try {
       const { userName, password } = req.body;
   
-      const user = await User.findByName(userName);
-      if (!user) return logAndRespond.authError(res, 'Login');
-  
-      const ok = await user.comparePassword(password);
-      if (!ok) return logAndRespond.authError(res, 'Login');
+      const user = await User.authenticate(userName, password);
+      if (!user) throw new AppAuthError('Invalid credentials');
   
       const token = signAccessToken(user);
       res.json({ token });

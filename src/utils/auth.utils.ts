@@ -10,7 +10,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
 const JWT_TTL = '1h';
 
 export function signAccessToken(user: IUser): string {
-  const payload: IJwtPayload = { sub: user.id, v: user.tokenVersion };
+  const payload: IJwtPayload = { sub: user._id, v: user.tokenVersion };
   return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_TTL });
 }
 

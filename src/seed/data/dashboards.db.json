@@ -1,153 +1,153 @@
 [
   {
-    "alias": "tpl_default_overview",
+    "aliasId": "tpl_default_overview",
     "title": "Overview",
     "icon": "home",
     "tabs": [
       {
-        "alias": "overview",
+        "aliasId": "overview",
         "title": "Overview",
         "cards": [
           {
-            "alias": "balcony-weather",
+            "aliasId": "balcony-weather",
             "title": "Balcony",
             "layout": "horizontalLayout",
-            "itemAliases": [ "temperature-outside", "humidity-outside", "weather" ]
+            "itemAliasIds": [ "temperature-outside", "humidity-outside", "weather" ]
           },
           {
-            "alias": "indoor-rooms",
+            "aliasId": "indoor-rooms",
             "title": "Rooms",
             "layout": "verticalLayout",
-            "itemAliases": [ "co2-1", "humidity-1" ]
+            "itemAliasIds": [ "co2-1", "humidity-1" ]
           },
           {
-            "alias": "motion",
+            "aliasId": "motion",
             "title": "",
             "layout": "singleInstrument",
-            "itemAliases": [ "motion-outside" ]
+            "itemAliasIds": [ "motion-outside" ]
           },
           {
-            "alias": "living-room-mixed",
+            "aliasId": "living-room-mixed",
             "title": "Living Room",
             "layout": "verticalLayout",
-            "itemAliases": [ "floor-lamp", "tv", "temperature-1", "co2-1" ]
+            "itemAliasIds": [ "floor-lamp", "tv", "temperature-1", "co2-1" ]
           }
         ]
       },
       {
-        "alias": "lights",
+        "aliasId": "lights",
         "title": "Lights",
         "cards": [
           {
-            "alias": "kitchen-light",
+            "aliasId": "kitchen-light",
             "title": "Kitchen",
             "layout": "singleInstrument",
-            "itemAliases": [ "ceiling-light-kitchen" ]
+            "itemAliasIds": [ "ceiling-light-kitchen" ]
           },
           {
-            "alias": "corridor-light",
+            "aliasId": "corridor-light",
             "title": "Corridor",
             "layout": "singleInstrument",
-            "itemAliases": [ "main-light" ]
+            "itemAliasIds": [ "main-light" ]
           },
           {
-            "alias": "living-room-light",
+            "aliasId": "living-room-light",
             "title": "Living Room",
             "layout": "singleInstrument",
-            "itemAliases": [ "floor-lamp" ]
+            "itemAliasIds": [ "floor-lamp" ]
           },
           {
-            "alias": "bedroom-light",
+            "aliasId": "bedroom-light",
             "title": "Bedroom",
             "layout": "singleInstrument",
-            "itemAliases": [ "ceiling-light-master-bedroom" ]
+            "itemAliasIds": [ "ceiling-light-master-bedroom" ]
           },
           {
-            "alias": "basement-light",
+            "aliasId": "basement-light",
             "title": "Basement",
             "layout": "singleInstrument",
-            "itemAliases": [ "basement-light" ]
+            "itemAliasIds": [ "basement-light" ]
           }
         ]
       }
     ]
   },
   {
-    "alias": "tpl_default_lights",
+    "aliasId": "tpl_default_lights",
     "title": "Electricity",
     "icon": "bolt",
     "tabs": [
       {
-        "alias": "usage",
+        "aliasId": "usage",
         "title": "Current Usage",
         "cards": [
           {
-            "alias": "meter-status",
+            "aliasId": "meter-status",
             "title": "Electric Meter",
             "layout": "horizontalLayout",
-            "itemAliases": [ "power-total", "peak-hour" ]
+            "itemAliasIds": [ "power-total", "peak-hour" ]
           },
           {
-            "alias": "usage-breakdown",
+            "aliasId": "usage-breakdown",
             "title": "Appliance Breakdown",
             "layout": "verticalLayout",
-            "itemAliases": [ "power-living-room", "power-kitchen", "power-heater" ]
+            "itemAliasIds": [ "power-living-room", "power-kitchen", "power-heater" ]
           }
         ]
       }
     ]
   },
   {
-    "alias": "tpl_default_climate",
+    "aliasId": "tpl_default_climate",
     "title": "Climate",
     "icon": "device_thermostat",
     "tabs": [
       {
-        "alias": "inside",
+        "aliasId": "inside",
         "title": "Indoor",
         "cards": [
           {
-            "alias": "climate-bedroom",
+            "aliasId": "climate-bedroom",
             "title": "Bedroom",
-            "layout": "singleInstrument",
-            "itemAliases": [ "temperature-2", "humidity-0" ]
+            "layout": "verticalLayout",
+            "itemAliasIds": [ "temperature-2", "humidity-0" ]
           },
           {
-            "alias": "climate-kitchen",
+            "aliasId": "climate-kitchen",
             "title": "Kitchen",
-            "layout": "singleInstrument",
-            "itemAliases": [ "temperature-1", "co2-1" ]
+            "layout": "verticalLayout",
+            "itemAliasIds": [ "temperature-1", "co2-1" ]
           }
         ]
       }
     ]
   },
   {
-    "alias": "tpl_default_security",
+    "aliasId": "tpl_default_security",
     "title": "Security",
     "icon": "shield",
     "tabs": [
       {
-        "alias": "home-security",
+        "aliasId": "home-security",
         "title": "Home",
         "cards": [
           {
-            "alias": "entrance-door",
+            "aliasId": "entrance-door",
             "title": "Entrance",
             "layout": "singleInstrument",
-            "itemAliases": [ "lock" ]
+            "itemAliasIds": [ "lock" ]
           },
           {
-            "alias": "camera-zone1",
+            "aliasId": "camera-zone1",
             "title": "Camera Zone 1",
             "layout": "verticalLayout",
-            "itemAliases": [ "camera", "motion-1" ]
+            "itemAliasIds": [ "camera", "motion-1" ]
           },
           {
-            "alias": "alarm-status",
+            "aliasId": "alarm-status",
             "title": "Alarm",
             "layout": "singleInstrument",
-            "itemAliases": [ "alarm" ]
+            "itemAliasIds": [ "alarm" ]
           }
         ]
       }

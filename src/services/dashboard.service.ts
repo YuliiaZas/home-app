@@ -1,10 +1,18 @@
-import { Dashboard, DashboardTemplate, IDashboardTemplate, ITab } from '@models';
+import { Dashboard, DashboardTemplate, IDashboard, IDashboardTemplate, ITab } from '@models';
+import { AppError } from '@utils';
 import { UserInstrumentService } from './user-instrument.service';
+import { InstrumentService } from './instrument.service';
 
 export class DashboardService {
-  static async addDefaultDashboards(userId: string) {
-    const templates: IDashboardTemplate[] = await DashboardTemplate.find().lean();
-    if (!templates || templates.length === 0) return;
+  static async addDefaultDashboards(userId: string): Promise<IDashboard[]> {
+    const templates = await DashboardTemplate.find<IDashboardTemplate>().lean();
+    if (!templates || templates.length === 0) throw new AppError('No dashboard templates found', 500);
+
+    const allTabs = templates.flatMap((tpl) => tpl.tabs);
+    const validationError = await InstrumentService.validateInstrumentsInTabs(allTabs);
+    if (validationError) {
+      throw new AppError(`Default dashboards not created due to invalid instrument IDs: ${validationError.invalidIds?.join(', ')}`, 400);
+    }
 
     const dashboards = await Promise.all(
       templates.map((tpl) =>
@@ -22,12 +30,10 @@ export class DashboardService {
         await UserInstrumentService.updateUserInstrumentsForDashboard({
           userId,
           dashboardId: d._id,
-          currentUserInstruments: this.getInstrumentsFromTabs(d.tabs) || [],
+          currentUserInstruments: InstrumentService.getInstrumentsFromTabs(d.tabs) || [],
         })
     );
-  }
 
-  static getInstrumentsFromTabs(tabs: ITab[]): string[] {
-    return tabs.flatMap((t) => t.cards.flatMap((c) => c.items));
+    return dashboards;
   }
 }

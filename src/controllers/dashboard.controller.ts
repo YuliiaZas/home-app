@@ -1,103 +1,132 @@
 import { Request, Response } from 'express';
-import { Dashboard, IDashboard, Instrument, ITab, UserInstrument } from '@models';
-import { UserInstrumentService } from '@services';
-import { isTab, resolveDashboard } from '@utils';
+import { Dashboard, IDashboard, IInstrument, Instrument, IUserInstrument, UserInstrument } from '@models';
+import { DashboardService, InstrumentService, UserInstrumentService } from '@services';
+import { AppError, handleCommonErrors, resolveDashboard } from '@utils';
 
 export class DashboardController {
   static async getDashboards(req: Request, res: Response) {
-    const dashboards = await Dashboard.find({
-      ownerUserId: req.user.id,
-    }).select('title icon');
-    res.json(dashboards || []);
+    try {
+      const dashboards = await Dashboard.find<IDashboard>({ ownerUserId: req.user.id }).select("title icon");
+      res.json(dashboards || []);
+    } catch (error) {
+      handleCommonErrors(error, res, "Get Dashboards");
+    }
   }
 
   static async createDashboard(req: Request, res: Response) {
-    const { title, icon } = req.body;
-    if (!title || !icon) return res.status(400).send("Missing or invalid 'title' or 'icon'");
+    try {
+      const { title, icon } = req.body;
 
-    const dashboard = await Dashboard.create({
-      ownerUserId: req.user.id,
-      title,
-      icon,
-      tabs: [],
-    });
+      const dashboard: IDashboard = await Dashboard.create({
+        ownerUserId: req.user.id,
+        title,
+        icon,
+        tabs: [],
+      });
 
-    res.status(201).json(dashboard);
+      res.status(201).json(dashboard);
+    } catch (error) {
+      handleCommonErrors(error, res, "Get Dashboards");
+    }
   }
 
   static async getDashboardById(req: Request, res: Response) {
-    const { dashboardId } = req.params;
-    const dashboard: IDashboard = await Dashboard.findOne({
-      _id: dashboardId,
-      ownerUserId: req.user.id,
-    });
-    if (!dashboard) return res.status(404).send('Dashboard not found');
+    try {
+      const { dashboardId } = req.params;
+      const dashboard = await Dashboard.findOne<IDashboard>({
+        _id: dashboardId,
+        ownerUserId: req.user.id,
+      });
+      if (!dashboard) throw new AppError("Dashboard not found", 404);
 
-    const instrumentIds = dashboard.tabs.flatMap((t) => t.cards.flatMap((c) => c.items));
+      const instrumentIds = InstrumentService.getInstrumentsFromTabs(dashboard.tabs);
 
-    const instruments = await Instrument.find({
-      _id: { $in: instrumentIds },
-    }).lean();
+      const instruments = await Instrument.find<IInstrument>({
+        _id: { $in: instrumentIds },
+      });
 
-    const userInstruments = await UserInstrument.find({
-      ownerUserId: req.user.id,
-      dashboards: dashboardId,
-    }).lean();
+      const userInstruments = await UserInstrument.find<IUserInstrument>({
+        ownerUserId: req.user.id,
+        dashboards: dashboardId,
+      });
 
-    res.json(
-      resolveDashboard({
-        dashboard,
-        instruments,
-        userInstruments,
-      })
-    );
+      res.json(
+        resolveDashboard({
+          dashboard,
+          instruments,
+          userInstruments,
+        })
+      );
+    } catch (error) {
+      handleCommonErrors(error, res, "Get Dashboard by ID");
+    }
   }
 
   static async updateDashboard(req: Request, res: Response) {
-    const { tabs, title, icon } = req.body;
+    try {
+      const { tabs, title, icon } = req.body;
 
-    let dashboard = await Dashboard.findOne({
-      _id: req.params.dashboardId,
-      ownerUserId: req.user.id,
-    });
-    if (!dashboard) return res.status(404).send('Dashboard not found');
+      let dashboard = await Dashboard.findOne({
+        _id: req.params.dashboardId,
+        ownerUserId: req.user.id,
+      });
+      if (!dashboard) throw new AppError("Dashboard not found", 404);
 
-    if ((tabs && !Array.isArray(tabs)) || (tabs && !tabs.every((tab: unknown) => isTab(tab)))) {
-      return res.status(400).send("Invalid 'tabs' format");
+      if (tabs) {
+        const validationError = await InstrumentService.validateInstrumentsInTabs(tabs);
+        if (validationError) {
+          throw new AppError(`Dashboards not updated due to invalid instrument IDs: ${validationError.invalidIds?.join(', ')}`, 400);
+        }
+
+        const currentUserInstruments = InstrumentService.getInstrumentsFromTabs(tabs);
+
+        await UserInstrumentService.updateUserInstrumentsForDashboard({
+          userId: req.user.id,
+          dashboardId: dashboard._id,
+          currentUserInstruments,
+        });
+
+        dashboard.tabs = tabs;
+      }
+
+      if (title) dashboard.title = title;
+      if (icon) dashboard.icon = icon;
+
+      await dashboard.save();
+
+      res.status(200).json(dashboard);
+    } catch (error) {
+      handleCommonErrors(error, res, "Get Dashboards");
     }
-
-    if (tabs) dashboard.tabs = tabs;
-    if (title) dashboard.title = title;
-    if (icon) dashboard.icon = icon;
-
-    await dashboard.save();
-
-    if (!tabs) return res.status(200).json(dashboard);
-
-    const currentUserInstruments = tabs.flatMap((tab: ITab) => tab.cards.flatMap((card) => card.items));
-
-    await UserInstrumentService.updateUserInstrumentsForDashboard({
-      userId: req.user.id,
-      dashboardId: dashboard._id,
-      currentUserInstruments,
-    });
-
-    res.status(200).json(dashboard);
   }
 
   static async deleteDashboard(req: Request, res: Response) {
-    const dashboard = await Dashboard.findOneAndDelete({
-      _id: req.params.dashboardId,
-      ownerUserId: req.user.id,
-    });
+    try {
+      const result = await Dashboard.findOneAndDelete<IDashboard>({
+        _id: req.params.dashboardId,
+        ownerUserId: req.user.id,
+      });
 
-    if (!dashboard) return res.status(404).send('Dashboard not found');
+      if (!result?.value) throw new AppError("Dashboard not found", 404);
 
-    await UserInstrumentService.removeUserInstrumentsForDashboard({
-      userId: req.user.id,
-      dashboardId: dashboard._id,
-    });
+      await UserInstrumentService.removeUserInstrumentsForDashboard({
+        userId: req.user.id,
+        dashboardId: result.value._id,
+      });
 
-    res.status(204).send();
+      res.status(204).send();
+    } catch (error) {
+      handleCommonErrors(error, res, "Delete Dashboard");
+    }
+  }
+
+  static async createDefaultDashboards(req: Request, res: Response) {
+    try {
+      const dashboards: IDashboard[] = await DashboardService.addDefaultDashboards(req.user.id);
+
+      res.status(201).json(dashboards);
+    } catch (error) {
+      handleCommonErrors(error, res, "Create Default Dashboards");
+    }
   }
 }
