@@ -4,6 +4,7 @@ import { dashboardSchemaDefinition, IDashboardBase } from './dashboard';
 
 export interface DashboardTemplateInput extends IDashboardBase {
   isTemplate: boolean;
+  aliasId: string;
 }
 
 export interface IDashboardTemplate extends DashboardTemplateInput, Document {}

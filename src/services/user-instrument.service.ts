@@ -14,7 +14,6 @@ export class UserInstrumentService {
     updatedInstrumentIds: string[];
     session?: ClientSession | null;
   }): Promise<{ dashboardId: string; addedInstruments: number; removedInstruments: number }> {
-    console.log(updatedInstrumentIds.length)
     const dashboardObjectId = new Types.ObjectId(dashboardId);
 
     const existingUserInstruments: IUserInstrument[] = await UserInstrument.find({
@@ -78,6 +77,13 @@ export class UserInstrumentService {
     if (bulkOptions.length > 0) {
       await UserInstrument.bulkWrite(bulkOptions);
     }
+  }
+
+  static async getUserInstrumentsMapByDashboardId(userId: string, dashboardId: string): Promise<Map<string, IUserInstrument>> {
+    return await UserInstrument.find<IUserInstrument>({
+      userId,
+      dashboards: dashboardId,
+    }).lean().then(uis => new Map(uis.map(ui => [ui.instrumentId.toString(), ui])));
   }
 
   static getRemovingOptionForDashboardUserInstrument(

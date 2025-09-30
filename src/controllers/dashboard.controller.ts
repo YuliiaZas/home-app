@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import { Dashboard, IDashboard, IUserInstrument, UserInstrument } from '@models';
+import { Dashboard, IDashboard } from '@models';
 import { DashboardService, UserInstrumentService } from '@services';
-import { AppError, getInstrumentIdsFromTabs, handleCommonErrors, resolveDashboard } from '@utils';
+import { AppError, getInstrumentIdsFromTabs, handleCommonErrors } from '@utils';
 
 export class DashboardController {
   static async getDashboards(req: Request, res: Response) {
@@ -36,15 +36,7 @@ export class DashboardController {
       const dashboard = await Dashboard.findByAliasId(req.params.aliasId, req.user.id);
       if (!dashboard) throw new AppError('Dashboard not found', 404);
 
-      const userInstruments = await UserInstrument.find<IUserInstrument>({
-        userId: req.user.id,
-        dashboards: dashboard._id,
-      }).lean();
-
-      res.status(200).json(resolveDashboard({
-        dashboard: (await dashboard.populate(DashboardService.ITEMS_POPULATE_OPTIONS)).toObject(),
-        userInstruments
-      }));
+      res.status(200).json(await DashboardService.resolveDashboardWithInstruments(dashboard, req.user.id));
     } catch (error) {
       handleCommonErrors(error, res, 'Get Dashboard by Alias ID');
     }
@@ -72,15 +64,7 @@ export class DashboardController {
 
       await dashboard.save();
 
-      const userInstruments = await UserInstrument.find<IUserInstrument>({
-        userId: req.user.id,
-        dashboards: dashboard._id,
-      }).lean();
-
-      res.status(200).json(resolveDashboard({
-        dashboard: (await dashboard.populate(DashboardService.ITEMS_POPULATE_OPTIONS)).toObject(),
-        userInstruments
-      }));
+      res.status(200).json(await DashboardService.resolveDashboardWithInstruments(dashboard, req.user.id));
     } catch (error) {
       handleCommonErrors(error, res, 'Get Dashboards');
     }

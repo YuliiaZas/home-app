@@ -1,6 +1,6 @@
 import { startSession, Types } from 'mongoose';
 import { Dashboard, DashboardTemplate, IDashboard, IDashboardTemplate } from '@models';
-import { AppError, getInstrumentIdsFromTabs } from '@utils';
+import { AppError, getInstrumentIdsFromTabs, resolveDashboard } from '@utils';
 import { UserInstrumentService } from './user-instrument.service';
 
 export class DashboardService {
@@ -62,5 +62,14 @@ export class DashboardService {
     } finally {
       session.endSession();
     }
+  }
+
+  static async resolveDashboardWithInstruments(rawDashboard: IDashboard, userId: string) {
+    const dashboard = (await rawDashboard.populate(DashboardService.ITEMS_POPULATE_OPTIONS)).toObject();
+
+    return resolveDashboard({
+      dashboard,
+      userInstrumentMap: await UserInstrumentService.getUserInstrumentsMapByDashboardId(userId, dashboard._id),
+    });
   }
 }

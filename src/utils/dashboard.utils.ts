@@ -1,13 +1,10 @@
 import { IInstrumentInput, ITab, IUserInstrument } from '@models';
 import { IDashboardRawResponse, IDashboardResponse } from '@types';
 
-export function resolveDashboard({ dashboard, userInstruments }: {
+export function resolveDashboard({ dashboard, userInstrumentMap }: {
   dashboard: IDashboardRawResponse;
-  userInstruments: IUserInstrument[];
+  userInstrumentMap: Map<string, IUserInstrument>;
 }): IDashboardResponse {
-  const userInstrumentMap = new Map<string, IUserInstrument>();
-  userInstruments.forEach((ui) => userInstrumentMap.set(ui.instrumentId.toString(), ui));
-
   return {
     ...dashboard,
     tabs: (dashboard.tabs || []).map((tab) => ({
