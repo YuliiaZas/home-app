@@ -1,36 +1,33 @@
-import { ICard, IDashboard, IInstrument, ITab, IUserInstrument } from '@models';
+import { IInstrumentInput, ITab, IUserInstrument } from '@models';
+import { IDashboardRawResponse, IDashboardResponse } from '@types';
 
-export function resolveDashboard({
-  dashboard,
-  instruments,
-  userInstruments,
-}: {
-  dashboard: IDashboard;
-  instruments: IInstrument[];
+export function resolveDashboard({ dashboard, userInstruments }: {
+  dashboard: IDashboardRawResponse;
   userInstruments: IUserInstrument[];
-}) {
-  const resolved = JSON.parse(JSON.stringify(dashboard));
+}): IDashboardResponse {
+  const userInstrumentMap = new Map<string, IUserInstrument>();
+  userInstruments.forEach((ui) => userInstrumentMap.set(ui.instrumentId.toString(), ui));
 
-  resolved.tabs = (resolved.tabs || []).map((tab: ITab) => ({
-    ...tab,
-    cards: (tab.cards || []).map((card: ICard) => ({
-      ...card,
-      items: (card.items || []).map((instrumentId) => {
-        const instrument = instruments.find((d) => d._id === instrumentId);
-        if (!instrument) return { error: 'Missing device', instrumentId };
+  return {
+    ...dashboard,
+    tabs: (dashboard.tabs || []).map((tab) => ({
+      ...tab,
+      cards: (tab.cards || []).map((card) => ({
+        ...card,
+        items: (card.items || []).map((instrument) => {
+          const userDevice = userInstrumentMap.get(instrument._id.toString());
+          const resolvedInstrument: IInstrumentInput & { _id: string } = {
+            ...instrument,
+            label: userDevice?.aliasLabel || instrument.label,
+            ...(userDevice?.state !== undefined ? { state: userDevice?.state } : {}),
+            ...(userDevice?.value !== undefined ? { value: userDevice?.value } : {}),
+          }
 
-        const userDevice = userInstruments.find((d) => d.instrumentId === instrument.id);
-
-        return {
-          ...instrument,
-          ...(instrument.type === 'device' ? { state: userDevice?.state ?? false } : {}),
-          ...(instrument.type === 'sensor' ? { value: userDevice?.value } : {}),
-        };
-      }),
+          return resolvedInstrument;
+        }),
+      })),
     })),
-  }));
-
-  return resolved;
+  };
 }
 
 export function validateTabAliasIds(tabs: ITab[]): string | null {

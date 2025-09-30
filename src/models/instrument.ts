@@ -2,10 +2,13 @@ import { Document, Schema, model } from 'mongoose';
 import { VALIDATION } from '@constants';
 import { AppValidationError, validateInstrumentData } from '@utils';
 
-export interface IInstrument extends Document {
+export interface IInstrumentBase {
   type: 'sensor' | 'device';
   icon: string;
   label: string;
+}
+
+export interface IInstrumentInput extends IInstrumentBase {
   aliasId?: string;
   state?: boolean;
   value?: {
@@ -13,6 +16,8 @@ export interface IInstrument extends Document {
     unit: string | null;
   };
 }
+
+export interface IInstrument extends Document, IInstrumentInput {}
 
 const instrumentSchema = new Schema<IInstrument>({
   type: {

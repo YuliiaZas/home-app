@@ -7,12 +7,12 @@ import {
   Dashboard,
   DashboardTemplate,
   DashboardTemplateInput,
-  IDashboardBaseSeed,
   IInstrument,
   Instrument,
   User,
   UserInstrument,
 } from '@models';
+import { IDashboardBaseSeed } from '@types';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,6 +22,7 @@ async function seed() {
 
   // 1. Clear existing collections
   await Instrument.syncIndexes();
+  await UserInstrument.syncIndexes();
   await DashboardTemplate.syncIndexes();
   await Dashboard.syncIndexes();
 

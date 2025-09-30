@@ -4,6 +4,8 @@ import { AppError, getInstrumentIdsFromTabs } from '@utils';
 import { UserInstrumentService } from './user-instrument.service';
 
 export class DashboardService {
+  static ITEMS_POPULATE_OPTIONS = { path: 'tabs.cards.items', select: '_id type icon label' };
+
   static async addDefaultDashboards(userId: string): Promise<IDashboard[]> {
     const templates = await DashboardTemplate.find<IDashboardTemplate>().lean();
     if (!templates || templates.length === 0) throw new AppError('No dashboard templates found', 500);
@@ -15,7 +17,7 @@ export class DashboardService {
 
       const dashboardsToCreate = templates.map((tpl) => {
         return new Dashboard({
-          ownerUserId: userId,
+          userId: userId,
           title: tpl.title,
           icon: tpl.icon,
           aliasId: tpl.aliasId,

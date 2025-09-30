@@ -1,6 +1,6 @@
 [
   {
-    "aliasId": "tpl_default_overview",
+    "aliasId": "default_overview",
     "title": "Overview",
     "icon": "home",
     "tabs": [
@@ -73,7 +73,7 @@
     ]
   },
   {
-    "aliasId": "tpl_default_lights",
+    "aliasId": "default_lights",
     "title": "Electricity",
     "icon": "bolt",
     "tabs": [
@@ -98,7 +98,7 @@
     ]
   },
   {
-    "aliasId": "tpl_default_climate",
+    "aliasId": "default_climate",
     "title": "Climate",
     "icon": "device_thermostat",
     "tabs": [
@@ -123,7 +123,7 @@
     ]
   },
   {
-    "aliasId": "tpl_default_security",
+    "aliasId": "default_security",
     "title": "Security",
     "icon": "shield",
     "tabs": [

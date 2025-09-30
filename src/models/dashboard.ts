@@ -1,11 +1,15 @@
-import { Document, Schema, SchemaDefinition, model } from 'mongoose';
+import { Document, Model, Query, Schema, SchemaDefinition, model } from 'mongoose';
 import { VALIDATION } from '@constants';
 import { AppValidationError, validateTabAliasIds } from '@utils';
 
 export interface IDashboard extends IDashboardInput, Document {}
 
+export interface IDashboardModel extends Model<IDashboard> {
+  findByAliasId: (aliasId: string, userId: string) => Query<IDashboard | null, IDashboard>;
+}
+
 export interface IDashboardInput extends IDashboardBase {
-  ownerUserId: Schema.Types.ObjectId;
+  userId: Schema.Types.ObjectId;
 }
 
 export interface IDashboardBase {
@@ -26,13 +30,7 @@ export interface ICard {
   _id?: string;
   title?: string;
   layout: 'verticalLayout' | 'horizontalLayout' | 'singleInstrument';
-  items: string[];
-}
-
-export interface IDashboardBaseSeed extends Omit<IDashboardBase, 'tabs'> {
-  tabs: (Omit<ITab, 'cards'> & {
-    cards: (Omit<ICard, 'items'> & { itemAliasIds: string[] })[];
-  })[];
+  items: Schema.Types.ObjectId[];
 }
 
 const cardSchema = new Schema<ICard>({
@@ -109,10 +107,10 @@ export const dashboardSchemaDefinition: SchemaDefinition = {
 
 const dashboardSchema = new Schema<IDashboard>({
   ...dashboardSchemaDefinition,
-  ownerUserId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
 });
 
-dashboardSchema.index({ ownerUserId: 1, aliasId: 1 }, { unique: true });
+dashboardSchema.index({ userId: 1, aliasId: 1 }, { unique: true });
 
 dashboardSchema.pre('validate', function (next) {
   const duplicateTabAliasId = validateTabAliasIds(this.tabs);
@@ -122,4 +120,32 @@ dashboardSchema.pre('validate', function (next) {
   next();
 });
 
-export const Dashboard = model<IDashboard>('Dashboard', dashboardSchema);
+dashboardSchema.statics.findByAliasId = function (aliasId: string, userId: string): Query<IDashboard | null, IDashboard> {
+  return this.findOne({ aliasId, userId });
+};
+
+const dashboardTransformFunction = (returnedDashboard: Record<string, unknown>) => {
+  delete returnedDashboard._id;
+  delete returnedDashboard.__v;
+  delete returnedDashboard.userId;
+  return returnedDashboard;
+};
+
+const tabTransformFunction = (returnedTab: Record<string, unknown>) => {
+  delete returnedTab._id;
+  return returnedTab;
+};
+
+dashboardSchema.set('toJSON', {
+  transform: (_, returnedDashboard) => dashboardTransformFunction(returnedDashboard),
+});
+
+dashboardSchema.set('toObject', {
+  transform: (_, returnedDashboard) => dashboardTransformFunction(returnedDashboard),
+});
+
+tabSchema.set('toObject', {
+  transform: (_, returnedTab) => tabTransformFunction(returnedTab),
+});
+
+export const Dashboard = model<IDashboard, IDashboardModel>('Dashboard', dashboardSchema);

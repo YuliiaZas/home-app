@@ -1,12 +1,12 @@
 import { Request, Response } from 'express';
-import { Dashboard, IDashboard, IInstrument, Instrument, IUserInstrument, UserInstrument } from '@models';
+import { Dashboard, IDashboard, IUserInstrument, UserInstrument } from '@models';
 import { DashboardService, UserInstrumentService } from '@services';
 import { AppError, getInstrumentIdsFromTabs, handleCommonErrors, resolveDashboard } from '@utils';
 
 export class DashboardController {
   static async getDashboards(req: Request, res: Response) {
     try {
-      const dashboards = await Dashboard.find<IDashboard>({ ownerUserId: req.user.id }).select('title icon');
+      const dashboards = await Dashboard.find<IDashboard>({ userId: req.user.id }).select('title icon aliasId');
       res.json(dashboards || []);
     } catch (error) {
       handleCommonErrors(error, res, 'Get Dashboards');
@@ -18,7 +18,7 @@ export class DashboardController {
       const { title, icon, aliasId } = req.body;
 
       const dashboard: IDashboard = await Dashboard.create({
-        ownerUserId: req.user.id,
+        userId: req.user.id,
         title,
         icon,
         aliasId,
@@ -31,35 +31,22 @@ export class DashboardController {
     }
   }
 
-  static async getDashboardById(req: Request, res: Response) {
+  static async getDashboardByAliasId(req: Request, res: Response) {
     try {
-      const { dashboardId } = req.params;
-      const dashboard = await Dashboard.findOne<IDashboard>({
-        _id: dashboardId,
-        ownerUserId: req.user.id,
-      });
+      const dashboard = await Dashboard.findByAliasId(req.params.aliasId, req.user.id);
       if (!dashboard) throw new AppError('Dashboard not found', 404);
 
-      const instrumentIds = getInstrumentIdsFromTabs(dashboard.tabs);
-
-      const instruments = await Instrument.find<IInstrument>({
-        _id: { $in: instrumentIds },
-      });
-
       const userInstruments = await UserInstrument.find<IUserInstrument>({
-        ownerUserId: req.user.id,
-        dashboards: dashboardId,
-      });
+        userId: req.user.id,
+        dashboards: dashboard._id,
+      }).lean();
 
-      res.json(
-        resolveDashboard({
-          dashboard,
-          instruments,
-          userInstruments,
-        })
-      );
+      res.status(200).json(resolveDashboard({
+        dashboard: (await dashboard.populate(DashboardService.ITEMS_POPULATE_OPTIONS)).toObject(),
+        userInstruments
+      }));
     } catch (error) {
-      handleCommonErrors(error, res, 'Get Dashboard by ID');
+      handleCommonErrors(error, res, 'Get Dashboard by Alias ID');
     }
   }
 
@@ -67,10 +54,7 @@ export class DashboardController {
     try {
       const { tabs, title, icon } = req.body;
 
-      let dashboard = await Dashboard.findOne({
-        _id: req.params.dashboardId,
-        ownerUserId: req.user.id,
-      });
+      const dashboard = await Dashboard.findByAliasId(req.params.aliasId, req.user.id);
       if (!dashboard) throw new AppError('Dashboard not found', 404);
 
       if (tabs) {
@@ -88,7 +72,15 @@ export class DashboardController {
 
       await dashboard.save();
 
-      res.status(200).json(dashboard);
+      const userInstruments = await UserInstrument.find<IUserInstrument>({
+        userId: req.user.id,
+        dashboards: dashboard._id,
+      }).lean();
+
+      res.status(200).json(resolveDashboard({
+        dashboard: (await dashboard.populate(DashboardService.ITEMS_POPULATE_OPTIONS)).toObject(),
+        userInstruments
+      }));
     } catch (error) {
       handleCommonErrors(error, res, 'Get Dashboards');
     }
@@ -97,8 +89,8 @@ export class DashboardController {
   static async deleteDashboard(req: Request, res: Response) {
     try {
       const result = await Dashboard.findOneAndDelete<IDashboard>({
-        _id: req.params.dashboardId,
-        ownerUserId: req.user.id,
+        aliasId: req.params.aliasId,
+        userId: req.user.id,
       });
 
       if (!result?.value) throw new AppError('Dashboard not found', 404);
