@@ -11,23 +11,21 @@ export class UserController {
       const newUser = await User.create({ userName, password, fullName });
       const token = signAccessToken(newUser);
 
-      const dashboards: { status: string; error: string | null } = {
-        status: 'success',
-        error: null,
+      let dashboardsCreation: { created: string[]; skipped: string[]; failed: string[]; errors: string[] } = {
+        created: [],
+        skipped: [],
+        failed: [],
+        errors: ['Dashboard creation timeout']
       };
 
-      try {
-        await Promise.race([
-          DashboardService.addDefaultDashboards(newUser._id),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Dashboard creation timeout')), 5000)),
-        ]);
-      } catch (error: unknown) {
-        console.error('Dashboard creation failed:', error);
-        dashboards.status = 'failed';
-        dashboards.error = error instanceof Error ? error.message : 'Unknown error occurred';
-      }
+      await Promise.race([
+        DashboardService.addDefaultDashboards(newUser._id).then((dashboardsCreationResult) => {
+          dashboardsCreation = dashboardsCreationResult;
+        }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Dashboard creation timeout')), 5000)),
+      ]);
 
-      res.status(201).json({ token, dashboards });
+      res.status(200).json({ token, dashboardsCreation });
     } catch (error: unknown) {
       handleCommonErrors(error, res, 'Registration');
     }

@@ -1,67 +1,79 @@
 import { startSession, Types } from 'mongoose';
-import { Dashboard, DashboardTemplate, IDashboard, IDashboardTemplate } from '@models';
+import { Dashboard, DashboardTemplate, IDashboard, IDashboardBase, IDashboardTemplate } from '@models';
 import { AppError, getInstrumentIdsFromTabs, resolveDashboard } from '@utils';
 import { UserInstrumentService } from './user-instrument.service';
+import { MongoError } from 'mongodb';
 
 export class DashboardService {
   static ITEMS_POPULATE_OPTIONS = { path: 'tabs.cards.items', select: '_id type icon label' };
 
-  static async addDefaultDashboards(userId: string): Promise<IDashboard[]> {
+  static async addDefaultDashboards(userId: string):
+  Promise<{ created: string[]; skipped: string[]; failed: string[]; errors: string[] }> {
     const templates = await DashboardTemplate.find<IDashboardTemplate>().lean();
     if (!templates || templates.length === 0) throw new AppError('No dashboard templates found', 500);
 
-    const session = await startSession();
+    return await this.addDashboards(userId, templates);
+  }
 
-    try {
-      session.startTransaction();
+  static async addDashboards(userId: string, dashboards: IDashboardBase[]):
+  Promise<{ created: string[]; skipped: string[]; failed: string[]; errors: string[] }> {
+    const dashboardsCreation: { created: string[]; skipped: string[]; failed: string[]; errors: string[] } = {
+      created: [],
+      skipped: [],
+      failed: [],
+      errors: [],
+    };
 
-      const dashboardsToCreate = templates.map((tpl) => {
-        return new Dashboard({
+    for (const d of dashboards) {
+      const session = await startSession();
+
+      const aliasId = d.aliasId;
+
+      try {
+        session.startTransaction();
+
+        const dashboard = new Dashboard({
+          _id: new Types.ObjectId(),
           userId: userId,
-          title: tpl.title,
-          icon: tpl.icon,
-          aliasId: tpl.aliasId,
-          tabs: tpl.tabs,
+          title: d.title,
+          icon: d.icon,
+          aliasId: d.aliasId,
+          tabs: d.tabs,
         });
-      });
 
-      dashboardsToCreate.forEach((dashboard) => {
-        if (!dashboard._id) {
-          dashboard._id = new Types.ObjectId();
-        }
-      });
+        const { addedInstruments, removedInstruments } = await UserInstrumentService.updateUserInstrumentsForDashboard({
+          userId,
+          dashboardId: dashboard._id,
+          updatedInstrumentIds: getInstrumentIdsFromTabs(dashboard.tabs) || [],
+          session,
+        });
 
-      const updatedUserInstruments = await Promise.all(
-        dashboardsToCreate.map(
-          async (d) =>
-            await UserInstrumentService.updateUserInstrumentsForDashboard({
-              userId,
-              dashboardId: d._id,
-              updatedInstrumentIds: getInstrumentIdsFromTabs(d.tabs) || [],
-              session,
-            })
-        )
-      );
+        await dashboard.save({ session });
 
-      await Dashboard.insertMany(dashboardsToCreate, { session });
+        await session.commitTransaction();
 
-      await session.commitTransaction();
+        dashboardsCreation.created.push(aliasId);
 
-      updatedUserInstruments.forEach(({ dashboardId, addedInstruments, removedInstruments }) => {
+        console.log(`✅ Created default dashboard '${aliasId}' for user '${userId}'`);
         console.log(
-          `✅ Updated UserInstruments for user ${userId} and dashboard ${dashboardId}. Added: ${addedInstruments}, Removed: ${removedInstruments}`
+          `✅ Updated UserInstruments for user '${userId}' and dashboard '${dashboard._id}'. Added: ${addedInstruments}, Removed: ${removedInstruments}`
         );
-      });
-      console.log(`✅ Created ${dashboardsToCreate.length} default dashboards for user ${userId}`);
-
-      return dashboardsToCreate;
-    } catch (error) {
-      await session.abortTransaction();
-      console.error('❌ Failed to create default dashboards:', error);
-      throw error;
-    } finally {
-      session.endSession();
+      } catch (error) {
+        await session.abortTransaction();
+        if (error instanceof MongoError && error.code === 11000 && 'keyPattern' in error && typeof error.keyPattern === 'object' && error.keyPattern !== null && 'aliasId' in error.keyPattern) {
+          dashboardsCreation.skipped.push(aliasId);
+          console.warn(`⚠️ Dashboard from template '${aliasId}' already exists for user '${userId}'. Skipping.`);
+          continue;
+        }
+        dashboardsCreation.failed.push(aliasId);
+        dashboardsCreation.errors.push(error instanceof Error ? `${aliasId}: ${error.message}` : `${aliasId}: Unknown error`);
+        console.error(`❌ Failed to create dashboard from template '${aliasId}' for user '${userId}':`, error);
+      } finally {
+        session.endSession();
+      }
     }
+
+    return dashboardsCreation;
   }
 
   static async resolveDashboardWithInstruments(rawDashboard: IDashboard, userId: string) {

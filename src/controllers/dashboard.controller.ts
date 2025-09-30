@@ -92,9 +92,9 @@ export class DashboardController {
 
   static async createDefaultDashboards(req: Request, res: Response) {
     try {
-      const dashboards: IDashboard[] = await DashboardService.addDefaultDashboards(req.user.id);
+      const dashboardsCreation = await DashboardService.addDefaultDashboards(req.user.id);
 
-      res.status(201).json(dashboards);
+      res.status(200).json(dashboardsCreation);
     } catch (error) {
       handleCommonErrors(error, res, 'Create Default Dashboards');
     }

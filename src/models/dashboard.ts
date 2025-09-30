@@ -15,14 +15,14 @@ export interface IDashboardInput extends IDashboardBase {
 export interface IDashboardBase {
   title: string;
   icon: string;
-  aliasId?: string;
+  aliasId: string;
   tabs: ITab[];
 }
 
 export interface ITab {
   _id?: string;
   title: string;
-  aliasId?: string;
+  aliasId: string;
   cards: ICard[];
 }
 
