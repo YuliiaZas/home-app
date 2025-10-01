@@ -3,7 +3,7 @@ import { UserInstrument } from '@models';
 import { AppError, handleCommonErrors } from '@utils';
 
 export class UserInstrumentController {
-  static async updateInstrumentState(req: Request, res: Response) {
+  async updateInstrumentState(req: Request, res: Response) {
     try {
       const { instrumentId } = req.params;
       const { state } = req.body;
@@ -23,7 +23,7 @@ export class UserInstrumentController {
     }
   }
 
-  static async getUserInstruments(req: Request, res: Response) {
+  async getUserInstruments(req: Request, res: Response) {
     try {
       const userInstruments = await UserInstrument.find({ userId: req.user.id });
       res.json(userInstruments);

@@ -17,10 +17,12 @@
       "@middleware": ["src/middleware"],
       "@models": ["src/models"],
       "@routes": ["src/routes"],
+      "@interfaces": ["src/interfaces"],
       "@services": ["src/services"],
       "@utils": ["src/utils"],
       "@constants": ["src/constants"],
-      "@types": ["src/types"]
+      "@types": ["src/types"],
+      "@di": ["src/dependency-injection"]
     }
   },
   "include": ["src/**/*.ts"],

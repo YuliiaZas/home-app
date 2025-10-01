@@ -1,10 +1,17 @@
 import { Request, Response } from 'express';
+import { DIContainer, SERVICE_TOKENS } from '@di';
+import { IDashboardService } from '@interfaces';
 import { User } from '@models';
 import { AppAuthError, handleCommonErrors, signAccessToken } from '@utils';
-import { DashboardService } from '@services';
 
 export class UserController {
-  static async registerUser(req: Request, res: Response) {
+  private dashboardService: IDashboardService;
+
+  constructor() {
+    this.dashboardService = DIContainer.resolve<IDashboardService>(SERVICE_TOKENS.Dashboard);
+  }
+
+  async registerUser(req: Request, res: Response) {
     try {
       const { userName, password, fullName } = req.body;
 
@@ -19,7 +26,7 @@ export class UserController {
       };
 
       await Promise.race([
-        DashboardService.addDefaultDashboards(newUser._id).then((dashboardsCreationResult) => {
+        this.dashboardService.addDefaultDashboards(newUser._id).then((dashboardsCreationResult) => {
           dashboardsCreation = dashboardsCreationResult;
         }),
         new Promise((_, reject) => setTimeout(() => reject(new Error('Dashboard creation timeout')), 5000)),
@@ -31,7 +38,7 @@ export class UserController {
     }
   }
 
-  static async loginUser(req: Request, res: Response) {
+  async loginUser(req: Request, res: Response) {
     try {
       const { userName, password } = req.body;
 
@@ -45,7 +52,7 @@ export class UserController {
     }
   }
 
-  static async getProfile(req: Request, res: Response) {
+  async getProfile(req: Request, res: Response) {
     try {
       const user = await User.findById(req.user.id).select('-passwordHash -tokenVersion');
       res.json(user);

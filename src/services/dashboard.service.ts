@@ -1,13 +1,21 @@
 import { startSession, Types } from 'mongoose';
-import { Dashboard, DashboardTemplate, IDashboard, IDashboardBase, IDashboardTemplate } from '@models';
-import { AppError, getInstrumentIdsFromTabs, resolveDashboard } from '@utils';
-import { UserInstrumentService } from './user-instrument.service';
 import { MongoError } from 'mongodb';
+import { DIContainer, SERVICE_TOKENS } from '@di';
+import { IDashboardService, IUserInstrumentService } from '@interfaces';
+import { Dashboard, DashboardTemplate, IDashboard, IDashboardBase, IDashboardTemplate } from '@models';
+import { IDashboardResponse } from '@types';
+import { AppError, getInstrumentIdsFromTabs, resolveDashboard } from '@utils';
 
-export class DashboardService {
-  static ITEMS_POPULATE_OPTIONS = { path: 'tabs.cards.items', select: '_id type icon label' };
+export class DashboardService implements IDashboardService {
+  private userInstrumentService: IUserInstrumentService;
 
-  static async addDefaultDashboards(userId: string):
+  constructor() {
+    this.userInstrumentService = DIContainer.resolve<IUserInstrumentService>(SERVICE_TOKENS.UserInstrument);
+  }
+
+  ITEMS_POPULATE_OPTIONS = { path: 'tabs.cards.items', select: '_id type icon label' };
+
+  async addDefaultDashboards(userId: string):
   Promise<{ created: string[]; skipped: string[]; failed: string[]; errors: string[] }> {
     const templates = await DashboardTemplate.find<IDashboardTemplate>().lean();
     if (!templates || templates.length === 0) throw new AppError('No dashboard templates found', 500);
@@ -15,7 +23,7 @@ export class DashboardService {
     return await this.addDashboards(userId, templates);
   }
 
-  static async addDashboards(userId: string, dashboards: IDashboardBase[]):
+  async addDashboards(userId: string, dashboards: IDashboardBase[]):
   Promise<{ created: string[]; skipped: string[]; failed: string[]; errors: string[] }> {
     const dashboardsCreation: { created: string[]; skipped: string[]; failed: string[]; errors: string[] } = {
       created: [],
@@ -41,7 +49,7 @@ export class DashboardService {
           tabs: d.tabs,
         });
 
-        const { addedInstruments, removedInstruments } = await UserInstrumentService.updateUserInstrumentsForDashboard({
+        const { addedInstruments, removedInstruments } = await this.userInstrumentService.updateUserInstrumentsForDashboard({
           userId,
           dashboardId: dashboard._id,
           updatedInstrumentIds: getInstrumentIdsFromTabs(dashboard.tabs) || [],
@@ -76,12 +84,12 @@ export class DashboardService {
     return dashboardsCreation;
   }
 
-  static async resolveDashboardWithInstruments(rawDashboard: IDashboard, userId: string) {
-    const dashboard = (await rawDashboard.populate(DashboardService.ITEMS_POPULATE_OPTIONS)).toObject();
+  async resolveDashboardWithInstruments(rawDashboard: IDashboard, userId: string): Promise<IDashboardResponse> {
+    const dashboard = (await rawDashboard.populate(this.ITEMS_POPULATE_OPTIONS)).toObject();
 
     return resolveDashboard({
       dashboard,
-      userInstrumentMap: await UserInstrumentService.getUserInstrumentsMapByDashboardId(userId, dashboard._id),
+      userInstrumentMap: await this.userInstrumentService.getUserInstrumentsMapByDashboardId(userId, dashboard._id),
     });
   }
 }

@@ -1,9 +1,10 @@
 import mongodb from 'mongodb';
 import mongoose, { ClientSession, Types } from 'mongoose';
+import { IUserInstrumentService } from '@interfaces';
 import { IInstrument, Instrument, IUserInstrument, UserInstrument } from '@models';
 
-export class UserInstrumentService {
-  static async updateUserInstrumentsForDashboard({
+export class UserInstrumentService implements IUserInstrumentService {
+  async updateUserInstrumentsForDashboard({
     userId,
     dashboardId,
     updatedInstrumentIds,
@@ -60,7 +61,7 @@ export class UserInstrumentService {
     };
   }
 
-  static async removeUserInstrumentsForDashboard({ userId, dashboardId }: { userId: string; dashboardId: string }) {
+  async removeUserInstrumentsForDashboard({ userId, dashboardId }: { userId: string; dashboardId: string }) {
     const dashboardObjectId = new Types.ObjectId(dashboardId);
 
     const userInstrumentsForDashboard = await UserInstrument.find<IUserInstrument>({
@@ -79,14 +80,14 @@ export class UserInstrumentService {
     }
   }
 
-  static async getUserInstrumentsMapByDashboardId(userId: string, dashboardId: string): Promise<Map<string, IUserInstrument>> {
+  async getUserInstrumentsMapByDashboardId(userId: string, dashboardId: string): Promise<Map<string, IUserInstrument>> {
     return await UserInstrument.find<IUserInstrument>({
       userId,
       dashboards: dashboardId,
     }).lean().then(uis => new Map(uis.map(ui => [ui.instrumentId.toString(), ui])));
   }
 
-  static getRemovingOptionForDashboardUserInstrument(
+  private getRemovingOptionForDashboardUserInstrument(
     dashboardObjectId: Types.ObjectId,
     userInstrument: IUserInstrument
   ): mongodb.AnyBulkWriteOperation<IUserInstrument> {
@@ -105,7 +106,7 @@ export class UserInstrumentService {
     };
   }
 
-  static getAddingOptionForDashboardInstrument(
+  private getAddingOptionForDashboardInstrument(
     ownerUserId: string,
     dashboardObjectId: Types.ObjectId,
     instrument: IInstrument
