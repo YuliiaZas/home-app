@@ -1,6 +1,6 @@
 import { Document, Schema, model } from 'mongoose';
-import { AppValidationError, validateTabAliasIds } from '@utils';
-import { dashboardSchemaDefinition, IDashboardBase } from './dashboard';
+import { AppValidationError, validateAliasIdsDuplication } from '@utils';
+import { dashboardSchemaDefinition, type IDashboardBase } from './dashboard';
 
 export interface DashboardTemplateInput extends IDashboardBase {
   isTemplate: boolean;
@@ -14,7 +14,7 @@ const dashboardTemplateSchema = new Schema<IDashboardTemplate>({
 });
 
 dashboardTemplateSchema.pre('validate', function (next) {
-  const duplicateTabAliasId = validateTabAliasIds(this.tabs);
+  const duplicateTabAliasId = validateAliasIdsDuplication(this.tabs);
   if (duplicateTabAliasId) {
     return next(new AppValidationError(`Duplicate Tab "aliasId" "${duplicateTabAliasId}" in the same dashboard`));
   }

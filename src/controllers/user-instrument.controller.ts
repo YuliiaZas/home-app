@@ -1,23 +1,25 @@
 import { Request, Response } from 'express';
-import { UserInstrument } from '@models';
-import { AppError, handleCommonErrors } from '@utils';
+import { DIContainer, SERVICE_TOKENS } from '@di';
+import { type IUserInstrumentService } from '@interfaces';
+import { handleCommonErrors } from '@utils';
 
-export class UserInstrumentController {
+export class UserInstrumentController {  
+  private userInstrumentService: IUserInstrumentService;
+
+  constructor() {
+    this.userInstrumentService = DIContainer.resolve<IUserInstrumentService>(SERVICE_TOKENS.UserInstrument);
+  }
+
   async updateInstrumentState(req: Request, res: Response) {
     try {
       const { instrumentId } = req.params;
       const { state } = req.body;
 
-      const userInstrument = await UserInstrument.findOne({
+      res.status(200).json(await this.userInstrumentService.updateUserInstrumentState({
         userId: req.user.id,
         instrumentId,
-      });
-      if (!userInstrument) throw new AppError('User instrument not found', 404);
-
-      userInstrument.state = state;
-      await userInstrument.save();
-
-      res.status(200).json(userInstrument);
+        state,
+      }));
     } catch (error: unknown) {
       handleCommonErrors(error, res, 'Update Instrument State');
     }
@@ -25,8 +27,7 @@ export class UserInstrumentController {
 
   async getUserInstruments(req: Request, res: Response) {
     try {
-      const userInstruments = await UserInstrument.find({ userId: req.user.id });
-      res.json(userInstruments);
+      res.status(200).json(await this.userInstrumentService.getUserInstruments(req.user.id));
     } catch (error: unknown) {
       handleCommonErrors(error, res, 'Get User Instruments');
     }

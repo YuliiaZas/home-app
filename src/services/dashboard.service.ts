@@ -1,19 +1,72 @@
 import { startSession, Types } from 'mongoose';
 import { MongoError } from 'mongodb';
 import { DIContainer, SERVICE_TOKENS } from '@di';
-import { IDashboardService, IUserInstrumentService } from '@interfaces';
-import { Dashboard, DashboardTemplate, IDashboard, IDashboardBase, IDashboardTemplate } from '@models';
-import { IDashboardResponse } from '@types';
-import { AppError, getInstrumentIdsFromTabs, resolveDashboard } from '@utils';
+import { type IDashboardService, type IUserInstrumentService } from '@interfaces';
+import { Dashboard, DashboardTemplate, type IDashboard, type IDashboardBase, type IDashboardTemplate, type IInstrumentInput, type IUserInstrument } from '@models';
+import { type IDashboardRawResponse, type IDashboardResponse } from '@types';
+import { AppError } from '@utils';
 
 export class DashboardService implements IDashboardService {
+  private ITEMS_POPULATE_OPTIONS = { path: 'tabs.cards.items', select: '_id type icon label' };
+
   private userInstrumentService: IUserInstrumentService;
 
   constructor() {
     this.userInstrumentService = DIContainer.resolve<IUserInstrumentService>(SERVICE_TOKENS.UserInstrument);
   }
 
-  ITEMS_POPULATE_OPTIONS = { path: 'tabs.cards.items', select: '_id type icon label' };
+  async getDashboards(userId: string): Promise<IDashboard[]> {
+    return await Dashboard.find<IDashboard>({ userId }).select('title icon aliasId');
+  }
+
+  async createDashboard({ userId, title, icon, aliasId }: { userId: string; title: string; icon: string; aliasId: string }): Promise<IDashboard> {
+    return await Dashboard.create({
+      userId,
+      title,
+      icon,
+      aliasId,
+      tabs: [],
+    });
+  }
+
+  async getDashboardByAliasId(userId: string, aliasId: string): Promise<IDashboardResponse> {
+    const dashboard = await Dashboard.findByAliasId(aliasId, userId);
+    if (!dashboard) throw new AppError('Dashboard not found', 404);
+
+    return await this.resolveDashboardWithInstruments(dashboard, userId);
+  }
+
+  async updateDashboard({ userId, aliasId, title, icon, tabs }: {userId: string; aliasId: string; title?: string; icon?: string; tabs?: IDashboard['tabs'] }): Promise<IDashboardResponse> {
+    const dashboard = await Dashboard.findByAliasId(aliasId, userId);
+    if (!dashboard) throw new AppError('Dashboard not found', 404);
+
+    if (tabs) {
+      await this.userInstrumentService.updateUserInstrumentsForDashboard({
+        userId,
+        dashboardId: dashboard._id,
+        dashboardTabs: tabs,
+      });
+
+      dashboard.tabs = tabs;
+    }
+
+    if (title) dashboard.title = title;
+    if (icon) dashboard.icon = icon;
+
+    await dashboard.save();
+
+    return await this.resolveDashboardWithInstruments(dashboard, userId);
+  }
+
+  async deleteDashboard(userId: string, aliasId: string): Promise<void> {
+    const result = await Dashboard.findOneAndDelete<IDashboard>({ userId, aliasId });
+    if (!result?.value) throw new AppError('Dashboard not found', 404);
+
+    await this.userInstrumentService.removeUserInstrumentsForDashboard({
+      userId,
+      dashboardId: result.value._id,
+    });
+  }
 
   async addDefaultDashboards(userId: string):
   Promise<{ created: string[]; skipped: string[]; failed: string[]; errors: string[] }> {
@@ -23,7 +76,7 @@ export class DashboardService implements IDashboardService {
     return await this.addDashboards(userId, templates);
   }
 
-  async addDashboards(userId: string, dashboards: IDashboardBase[]):
+  private async addDashboards(userId: string, dashboards: IDashboardBase[]):
   Promise<{ created: string[]; skipped: string[]; failed: string[]; errors: string[] }> {
     const dashboardsCreation: { created: string[]; skipped: string[]; failed: string[]; errors: string[] } = {
       created: [],
@@ -49,10 +102,10 @@ export class DashboardService implements IDashboardService {
           tabs: d.tabs,
         });
 
-        const { addedInstruments, removedInstruments } = await this.userInstrumentService.updateUserInstrumentsForDashboard({
+        await this.userInstrumentService.updateUserInstrumentsForDashboard({
           userId,
           dashboardId: dashboard._id,
-          updatedInstrumentIds: getInstrumentIdsFromTabs(dashboard.tabs) || [],
+          dashboardTabs: dashboard.tabs,
           session,
         });
 
@@ -63,9 +116,6 @@ export class DashboardService implements IDashboardService {
         dashboardsCreation.created.push(aliasId);
 
         console.log(`✅ Created default dashboard '${aliasId}' for user '${userId}'`);
-        console.log(
-          `✅ Updated UserInstruments for user '${userId}' and dashboard '${dashboard._id}'. Added: ${addedInstruments}, Removed: ${removedInstruments}`
-        );
       } catch (error) {
         await session.abortTransaction();
         if (error instanceof MongoError && error.code === 11000 && 'keyPattern' in error && typeof error.keyPattern === 'object' && error.keyPattern !== null && 'aliasId' in error.keyPattern) {
@@ -84,12 +134,39 @@ export class DashboardService implements IDashboardService {
     return dashboardsCreation;
   }
 
-  async resolveDashboardWithInstruments(rawDashboard: IDashboard, userId: string): Promise<IDashboardResponse> {
-    const dashboard = (await rawDashboard.populate(this.ITEMS_POPULATE_OPTIONS)).toObject();
+  private async resolveDashboardWithInstruments(rawDashboard: IDashboard, userId: string): Promise<IDashboardResponse> {
+    const dashboardPopulated = (await rawDashboard.populate(this.ITEMS_POPULATE_OPTIONS)).toObject();
 
-    return resolveDashboard({
-      dashboard,
-      userInstrumentMap: await this.userInstrumentService.getUserInstrumentsMapByDashboardId(userId, dashboard._id),
+    return this.resolveDashboard({
+      dashboard: dashboardPopulated,
+      userInstrumentMap: await this.userInstrumentService.getUserInstrumentsMapByDashboardId(userId, rawDashboard._id),
     });
+  }
+
+
+  private resolveDashboard({ dashboard, userInstrumentMap }: {
+    dashboard: IDashboardRawResponse;
+    userInstrumentMap: Map<string, IUserInstrument>;
+  }): IDashboardResponse {
+    return {
+      ...dashboard,
+      tabs: (dashboard.tabs || []).map((tab) => ({
+        ...tab,
+        cards: (tab.cards || []).map((card) => ({
+          ...card,
+          items: (card.items || []).map((instrument) => {
+            const userDevice = userInstrumentMap.get(instrument._id.toString());
+            const resolvedInstrument: IInstrumentInput & { _id: string } = {
+              ...instrument,
+              label: userDevice?.aliasLabel || instrument.label,
+              ...(userDevice?.state !== undefined ? { state: userDevice?.state } : {}),
+              ...(userDevice?.value !== undefined ? { value: userDevice?.value } : {}),
+            }
+  
+            return resolvedInstrument;
+          }),
+        })),
+      })),
+    };
   }
 }

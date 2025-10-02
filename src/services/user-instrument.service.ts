@@ -1,20 +1,52 @@
 import mongodb from 'mongodb';
-import mongoose, { ClientSession, Types } from 'mongoose';
-import { IUserInstrumentService } from '@interfaces';
-import { IInstrument, Instrument, IUserInstrument, UserInstrument } from '@models';
+import mongoose, { type ClientSession, Types } from 'mongoose';
+import { DIContainer, SERVICE_TOKENS } from '@di';
+import { type IInstrumentService, type IUserInstrumentService } from '@interfaces';
+import { type IInstrument, type ITab, type IUserInstrument, UserInstrument } from '@models';
+import { AppError } from '@utils';
 
 export class UserInstrumentService implements IUserInstrumentService {
+  private instrumentService: IInstrumentService;
+
+  constructor() {
+    this.instrumentService = DIContainer.resolve<IInstrumentService>(SERVICE_TOKENS.Instrument);
+  }
+
+  async updateUserInstrumentState({
+    userId,
+    instrumentId,
+    state,
+  }: {
+    userId: string;
+    instrumentId: string;
+    state: boolean;
+  }): Promise<IUserInstrument | null> {
+    const userInstrument = await UserInstrument.findOne({ userId, instrumentId });
+    if (!userInstrument) throw new AppError('User instrument not found', 404);
+
+    userInstrument.state = state;
+    await userInstrument.save();
+
+    return userInstrument;
+  }
+
+  async getUserInstruments(userId: string): Promise<IUserInstrument[]> {
+    return await UserInstrument.find({ userId });
+  }
+
   async updateUserInstrumentsForDashboard({
     userId,
     dashboardId,
-    updatedInstrumentIds,
+    dashboardTabs,
     session = null,
   }: {
     userId: string;
     dashboardId: string;
-    updatedInstrumentIds: string[];
+    dashboardTabs: ITab[];
     session?: ClientSession | null;
-  }): Promise<{ dashboardId: string; addedInstruments: number; removedInstruments: number }> {
+  }): Promise<void> {
+    const updatedInstrumentIds: string[] = this.getInstrumentIdsFromTabs(dashboardTabs);
+
     const dashboardObjectId = new Types.ObjectId(dashboardId);
 
     const existingUserInstruments: IUserInstrument[] = await UserInstrument.find({
@@ -36,7 +68,7 @@ export class UserInstrumentService implements IUserInstrumentService {
     }
 
     for (const instrumentId of updatedInstrumentIds) {
-      const instrument = await Instrument.findById(instrumentId).session(session);
+      const instrument = await this.instrumentService.getInstrumentById(instrumentId, session);
       if (!instrument) {
         console.warn(`Instrument with ID ${instrumentId} not found. Skipping.`);
         continue;
@@ -54,11 +86,9 @@ export class UserInstrumentService implements IUserInstrumentService {
       await UserInstrument.bulkWrite(bulkOptions, { session: session || undefined });
     }
 
-    return {
-      dashboardId,
-      addedInstruments,
-      removedInstruments,
-    };
+    console.log(
+      `✅ Updated UserInstruments for user '${userId}' and dashboard '${dashboardId}'. Added: ${addedInstruments}, Removed: ${removedInstruments}`
+    );
   }
 
   async removeUserInstrumentsForDashboard({ userId, dashboardId }: { userId: string; dashboardId: string }) {
@@ -130,5 +160,13 @@ export class UserInstrumentService implements IUserInstrumentService {
         upsert: true,
       },
     };
+  }
+
+  private getInstrumentIdsFromTabs(tabs: ITab[]): string[] {
+    try {
+      return tabs.flatMap((tab) => tab.cards.flatMap((card) => card.items.map(item => item.toString())));
+    } catch {
+      throw new AppError('Invalid tabs format', 400);
+    }
   }
 }
