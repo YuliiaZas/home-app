@@ -20,6 +20,7 @@ export default [
         __dirname: 'readonly',
         __filename: 'readonly',
         global: 'readonly',
+        setTimeout: 'readonly',
       },
     },
     plugins: {

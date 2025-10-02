@@ -1,7 +1,8 @@
 {
   "compilerOptions": {
     "target": "ES6",
-    "module": "commonjs",
+    "module": "ESNext",
+    "moduleResolution": "node",
     "rootDir": "./src",
     "outDir": "./dist",
     "strict": true,
@@ -11,13 +12,22 @@
     "typeRoots": ["./types", "./node_modules/@types"],
     "baseUrl": "./",
     "paths": {
+      "@config": ["src/config"],
       "@controllers": ["src/controllers"],
       "@middleware": ["src/middleware"],
       "@models": ["src/models"],
       "@routes": ["src/routes"],
+      "@interfaces": ["src/interfaces"],
+      "@services": ["src/services"],
       "@utils": ["src/utils"],
+      "@constants": ["src/constants"],
+      "@types": ["src/types"],
+      "@di": ["src/dependency-injection"]
     }
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "**/*.spec.ts"]
+  "exclude": ["node_modules", "**/*.spec.ts"],
+  "ts-node": {
+    "esm": true
+  }
 }

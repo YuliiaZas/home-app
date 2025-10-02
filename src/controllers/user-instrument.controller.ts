@@ -1,60 +1,34 @@
-import { Instrument, IUserInstrument, UserInstrument } from "@models";
+import { Request, Response } from 'express';
+import { UserInstrument } from '@models';
+import { AppError, handleCommonErrors } from '@utils';
 
-export const updateUserInstrumentsForDashboard = async (
-  {userId, dashboardId, currentUserInstruments}: {
-    userId: string,
-    dashboardId: string,
-    currentUserInstruments: string[]
-  }
-): Promise<void> => {
-  const userInstrumentsForDashboard: IUserInstrument[] = await UserInstrument.find({
-    userId,
-    dashboards: dashboardId,
-  });
+export class UserInstrumentController {
+  async updateInstrumentState(req: Request, res: Response) {
+    try {
+      const { instrumentId } = req.params;
+      const { state } = req.body;
 
-  const instrumentsNeededToBeRemoved = userInstrumentsForDashboard.filter((userInstrument) => !currentUserInstruments.includes(userInstrument.instrumentId));
-
-  instrumentsNeededToBeRemoved.forEach(async (userInstrument) => {
-    userInstrument.dashboards = userInstrument.dashboards.filter(dId => dId !== dashboardId);
-    if (userInstrument.dashboards.length === 0) {
-      await UserInstrument.deleteOne({ _id: userInstrument._id });
-    } else {
-      await userInstrument.save();
-    }
-  });
-
-  const instrumentsNeededToBeAdded = currentUserInstruments.filter((id) => !userInstrumentsForDashboard.some((userInstrument) => userInstrument.instrumentId === id));
-
-  instrumentsNeededToBeAdded.forEach(async (instrumentId) => {
-    const globalInstrument = await Instrument.findOne({ id: instrumentId }).lean();
-    if (globalInstrument) {
-      const newUserInstrument = new UserInstrument({
-        userId,
+      const userInstrument = await UserInstrument.findOne({
+        userId: req.user.id,
         instrumentId,
-        dashboards: [dashboardId],
-        ...(globalInstrument.type === "device" ? { state: globalInstrument.state ?? false } : {}),
-        ...(globalInstrument.type === "sensor" ? { value: globalInstrument.value } : {}),
       });
-      await newUserInstrument.save();
-    }
-  });
-};
+      if (!userInstrument) throw new AppError('User instrument not found', 404);
 
-export const removeUserInstrumentsForDashboard =async({userId, dashboardId}: {
-  userId: string,
-  dashboardId: string,
-}) =>{
-  const userInstrumentsForDashboard: IUserInstrument[] = await UserInstrument.find({
-    userId,
-    dashboards: dashboardId,
-  });
-
-  userInstrumentsForDashboard.forEach(async (userInstrument) => {
-    userInstrument.dashboards = userInstrument.dashboards.filter(dId => dId !== dashboardId);
-    if (userInstrument.dashboards.length === 0) {
-      await UserInstrument.deleteOne({ _id: userInstrument._id });
-    } else {
+      userInstrument.state = state;
       await userInstrument.save();
+
+      res.status(200).json(userInstrument);
+    } catch (error: unknown) {
+      handleCommonErrors(error, res, 'Update Instrument State');
     }
-  });
+  }
+
+  async getUserInstruments(req: Request, res: Response) {
+    try {
+      const userInstruments = await UserInstrument.find({ userId: req.user.id });
+      res.json(userInstruments);
+    } catch (error: unknown) {
+      handleCommonErrors(error, res, 'Get User Instruments');
+    }
+  }
 }

@@ -1,19 +1,13 @@
-import mongoose from 'mongoose';
+import { connect } from 'mongoose';
 
-const connectDatabase = async () => {
+export const connectDatabase = async () => {
   try {
-    await mongoose.connect(
-      process.env.MONGODB_URI || 'mongodb://localhost:27017/home-app',
-      {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-      }
-    );
-    console.log('MongoDB connected successfully');
+    await connect(process.env.MONGODB_URI || 'mongodb://localhost:27017', {
+      dbName: 'home-app',
+    });
+    console.log('✅ MongoDB connected successfully');
   } catch (error) {
-    console.error('MongoDB connection error:', error);
+    console.error('❌ MongoDB connection error:', error);
     process.exit(1);
   }
 };
-
-export default connectDatabase;

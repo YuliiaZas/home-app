@@ -1,0 +1,156 @@
+[
+  {
+    "aliasId": "default_overview",
+    "title": "Overview",
+    "icon": "home",
+    "tabs": [
+      {
+        "aliasId": "overview",
+        "title": "Overview",
+        "cards": [
+          {
+            "aliasId": "balcony-weather",
+            "title": "Balcony",
+            "layout": "horizontalLayout",
+            "itemAliasIds": [ "temperature-outside", "humidity-outside", "weather" ]
+          },
+          {
+            "aliasId": "indoor-rooms",
+            "title": "Rooms",
+            "layout": "verticalLayout",
+            "itemAliasIds": [ "co2-1", "humidity-1" ]
+          },
+          {
+            "aliasId": "motion",
+            "title": "",
+            "layout": "singleInstrument",
+            "itemAliasIds": [ "motion-outside" ]
+          },
+          {
+            "aliasId": "living-room-mixed",
+            "title": "Living Room",
+            "layout": "verticalLayout",
+            "itemAliasIds": [ "floor-lamp", "tv", "temperature-1", "co2-1" ]
+          }
+        ]
+      },
+      {
+        "aliasId": "lights",
+        "title": "Lights",
+        "cards": [
+          {
+            "aliasId": "kitchen-light",
+            "title": "Kitchen",
+            "layout": "singleInstrument",
+            "itemAliasIds": [ "ceiling-light-kitchen" ]
+          },
+          {
+            "aliasId": "corridor-light",
+            "title": "Corridor",
+            "layout": "singleInstrument",
+            "itemAliasIds": [ "main-light" ]
+          },
+          {
+            "aliasId": "living-room-light",
+            "title": "Living Room",
+            "layout": "singleInstrument",
+            "itemAliasIds": [ "floor-lamp" ]
+          },
+          {
+            "aliasId": "bedroom-light",
+            "title": "Bedroom",
+            "layout": "singleInstrument",
+            "itemAliasIds": [ "ceiling-light-master-bedroom" ]
+          },
+          {
+            "aliasId": "basement-light",
+            "title": "Basement",
+            "layout": "singleInstrument",
+            "itemAliasIds": [ "basement-light" ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "aliasId": "default_lights",
+    "title": "Electricity",
+    "icon": "bolt",
+    "tabs": [
+      {
+        "aliasId": "usage",
+        "title": "Current Usage",
+        "cards": [
+          {
+            "aliasId": "meter-status",
+            "title": "Electric Meter",
+            "layout": "horizontalLayout",
+            "itemAliasIds": [ "power-total", "peak-hour" ]
+          },
+          {
+            "aliasId": "usage-breakdown",
+            "title": "Appliance Breakdown",
+            "layout": "verticalLayout",
+            "itemAliasIds": [ "power-living-room", "power-kitchen", "power-heater" ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "aliasId": "default_climate",
+    "title": "Climate",
+    "icon": "device_thermostat",
+    "tabs": [
+      {
+        "aliasId": "inside",
+        "title": "Indoor",
+        "cards": [
+          {
+            "aliasId": "climate-bedroom",
+            "title": "Bedroom",
+            "layout": "verticalLayout",
+            "itemAliasIds": [ "temperature-2", "humidity-0" ]
+          },
+          {
+            "aliasId": "climate-kitchen",
+            "title": "Kitchen",
+            "layout": "verticalLayout",
+            "itemAliasIds": [ "temperature-1", "co2-1" ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "aliasId": "default_security",
+    "title": "Security",
+    "icon": "shield",
+    "tabs": [
+      {
+        "aliasId": "home-security",
+        "title": "Home",
+        "cards": [
+          {
+            "aliasId": "entrance-door",
+            "title": "Entrance",
+            "layout": "singleInstrument",
+            "itemAliasIds": [ "lock" ]
+          },
+          {
+            "aliasId": "camera-zone1",
+            "title": "Camera Zone 1",
+            "layout": "verticalLayout",
+            "itemAliasIds": [ "camera", "motion-1" ]
+          },
+          {
+            "aliasId": "alarm-status",
+            "title": "Alarm",
+            "layout": "singleInstrument",
+            "itemAliasIds": [ "alarm" ]
+          }
+        ]
+      }
+    ]
+  }
+]
