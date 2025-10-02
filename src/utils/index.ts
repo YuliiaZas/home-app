@@ -4,3 +4,4 @@ export * from './validate-alias-ids-duplication.utils';
 export * from './type-guards';
 export * from './errors.utils';
 export * from './validate-instrument-data.utils';
+export * from './enum-keys-to-selector';

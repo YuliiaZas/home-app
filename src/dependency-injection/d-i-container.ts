@@ -1,5 +1,5 @@
-import { type IDashboardService, type IInstrumentService, type IUserInstrumentService } from "@interfaces";
-import { DashboardService, InstrumentService, UserInstrumentService } from "@services";
+import { IUserService, type IDashboardService, type IInstrumentService, type IUserInstrumentService } from "@interfaces";
+import { DashboardService, InstrumentService, UserInstrumentService, UserService } from "@services";
 import { SERVICE_TOKENS } from "./service-tokens";
 
 export class DIContainer {
@@ -33,3 +33,4 @@ export class DIContainer {
 DIContainer.registerFactory<IDashboardService>(SERVICE_TOKENS.Dashboard, () => new DashboardService());
 DIContainer.registerFactory<IUserInstrumentService>(SERVICE_TOKENS.UserInstrument, () => new UserInstrumentService());
 DIContainer.registerFactory<IInstrumentService>(SERVICE_TOKENS.Instrument, () => new InstrumentService());
+DIContainer.registerFactory<IUserService>(SERVICE_TOKENS.User, () => new UserService());

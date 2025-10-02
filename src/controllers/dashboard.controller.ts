@@ -12,7 +12,6 @@ export class DashboardController {
 
   async getDashboards(req: Request, res: Response) {
     try {
-      console.log(this.dashboardService);
       res.status(200).json(await this.dashboardService.getDashboards(req.user.id));
     } catch (error) {
       handleCommonErrors(error, res, 'Get Dashboards');

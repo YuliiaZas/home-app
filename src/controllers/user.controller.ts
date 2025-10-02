@@ -1,61 +1,39 @@
 import { Request, Response } from 'express';
 import { DIContainer, SERVICE_TOKENS } from '@di';
-import { IDashboardService } from '@interfaces';
-import { User } from '@models';
-import { AppAuthError, handleCommonErrors, signAccessToken } from '@utils';
+import { type IUserService } from '@interfaces';
+import { type ILoginUserResponse, type IRegisterUserResponse, type IUserProfileResponse } from '@types';
+import { handleCommonErrors } from '@utils';
 
 export class UserController {
-  private dashboardService: IDashboardService;
+  private userService: IUserService;
 
   constructor() {
-    this.dashboardService = DIContainer.resolve<IDashboardService>(SERVICE_TOKENS.Dashboard);
+    this.userService = DIContainer.resolve<IUserService>(SERVICE_TOKENS.User);
   }
 
-  async registerUser(req: Request, res: Response) {
+  async registerUser(req: Request, res: Response<IRegisterUserResponse>) {
     try {
       const { userName, password, fullName } = req.body;
 
-      const newUser = await User.create({ userName, password, fullName });
-      const token = signAccessToken(newUser);
-
-      let dashboardsCreation: { created: string[]; skipped: string[]; failed: string[]; errors: string[] } = {
-        created: [],
-        skipped: [],
-        failed: [],
-        errors: ['Dashboard creation timeout']
-      };
-
-      await Promise.race([
-        this.dashboardService.addDefaultDashboards(newUser._id).then((dashboardsCreationResult) => {
-          dashboardsCreation = dashboardsCreationResult;
-        }),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Dashboard creation timeout')), 5000)),
-      ]);
-
-      res.status(200).json({ token, dashboardsCreation });
+      res.status(200).json(await this.userService.registerUser({ userName, password, fullName }));
     } catch (error: unknown) {
       handleCommonErrors(error, res, 'Registration');
     }
   }
 
-  async loginUser(req: Request, res: Response) {
+  async loginUser(req: Request, res: Response<ILoginUserResponse>) {
     try {
       const { userName, password } = req.body;
 
-      const user = await User.authenticate(userName, password);
-      if (!user) throw new AppAuthError('Invalid credentials');
-
-      const token = signAccessToken(user);
-      res.json({ token });
+      res.json(await this.userService.loginUser({ userName, password }));
     } catch (error: unknown) {
       handleCommonErrors(error, res, 'Login');
     }
   }
 
-  async getProfile(req: Request, res: Response) {
+  async getProfile(req: Request, res: Response<IUserProfileResponse | null>) {
     try {
-      const user = await User.findById(req.user.id).select('-passwordHash -tokenVersion');
-      res.json(user);
+      res.json(await this.userService.getProfile(req.user.id));
     } catch (error: unknown) {
       handleCommonErrors(error, res, 'Get Profile');
     }

@@ -3,6 +3,7 @@ import { requireAuth } from '@middleware';
 import { DashboardController, InstrumentController, UserController, UserInstrumentController } from '@controllers';
 
 const router = Router();
+
 const userController = new UserController();
 const dashboardController = new DashboardController();
 const instrumentController = new InstrumentController();
@@ -20,7 +21,8 @@ router.patch('/dashboards/:aliasId', requireAuth, dashboardController.updateDash
 router.delete('/dashboards/:aliasId', requireAuth, dashboardController.deleteDashboard.bind(dashboardController));
 
 router.get('/instruments', requireAuth, instrumentController.getInstruments.bind(instrumentController));
+
 router.get('/instruments/user', requireAuth, userInstrumentController.getUserInstruments.bind(userInstrumentController));
-router.patch('/instruments/:instrumentId', requireAuth, userInstrumentController.updateInstrumentState.bind(userInstrumentController));
+router.patch('/instruments/user/:instrumentId', requireAuth, userInstrumentController.updateInstrumentState.bind(userInstrumentController));
 
 export default router;
