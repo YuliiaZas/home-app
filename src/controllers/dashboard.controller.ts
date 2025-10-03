@@ -1,6 +1,7 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { DIContainer, SERVICE_TOKENS } from '@di';
 import { type IDashboardService } from '@interfaces';
+import { type AuthenticatedRequest, type IDashboardAliasId, type IDashboardCreate, type IDashboardUpdate } from '@types';
 import { handleCommonErrors } from '@utils';
 
 export class DashboardController {
@@ -10,7 +11,7 @@ export class DashboardController {
     this.dashboardService = DIContainer.resolve<IDashboardService>(SERVICE_TOKENS.Dashboard);
   }
 
-  async getDashboards(req: Request, res: Response) {
+  async getDashboards(req: AuthenticatedRequest, res: Response) {
     try {
       res.status(200).json(await this.dashboardService.getDashboards(req.user.id));
     } catch (error) {
@@ -18,18 +19,18 @@ export class DashboardController {
     }
   }
 
-  async createDashboard(req: Request, res: Response) {
+  async createDashboard(req: AuthenticatedRequest<object, IDashboardCreate>, res: Response) {
     try {
       const { title, icon, aliasId } = req.body;
       res.status(201).json(
-        await this.dashboardService.createDashboard({userId: req.user.id, aliasId, title, icon })
+        await this.dashboardService.createDashboard(req.user.id, { aliasId, title, icon })
       );
     } catch (error) {
       handleCommonErrors(error, res, 'Get Dashboards');
     }
   }
 
-  async getDashboardByAliasId(req: Request, res: Response) {
+  async getDashboardByAliasId(req: AuthenticatedRequest<IDashboardAliasId>, res: Response) {
     try {
       res.status(200).json(
         await this.dashboardService.getDashboardByAliasId(req.user.id, req.params.aliasId)
@@ -39,20 +40,20 @@ export class DashboardController {
     }
   }
 
-  async updateDashboard(req: Request, res: Response) {
+  async updateDashboard(req: AuthenticatedRequest<IDashboardAliasId, IDashboardUpdate>, res: Response) {
     try {
       const { tabs, title, icon } = req.body;
       const { aliasId } = req.params;
 
       res.status(200).json(
-        await this.dashboardService.updateDashboard({ userId: req.user.id, aliasId, tabs, title, icon })
+        await this.dashboardService.updateDashboard(req.user.id, aliasId, { tabs, title, icon })
       );
     } catch (error) {
       handleCommonErrors(error, res, 'Get Dashboards');
     }
   }
 
-  async deleteDashboard(req: Request, res: Response) {
+  async deleteDashboard(req: AuthenticatedRequest<IDashboardAliasId>, res: Response) {
     try {
       await this.dashboardService.deleteDashboard(req.user.id, req.params.aliasId);
 
@@ -62,7 +63,7 @@ export class DashboardController {
     }
   }
 
-  async createDefaultDashboards(req: Request, res: Response) {
+  async createDefaultDashboards(req: AuthenticatedRequest, res: Response) {
     try {
       res.status(200).json(await this.dashboardService.addDefaultDashboards(req.user.id));
     } catch (error) {

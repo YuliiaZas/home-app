@@ -19,18 +19,18 @@ export interface IDashboardBase {
   tabs: ITab[];
 }
 
-export interface ITab {
+export interface ITab<TItem = Schema.Types.ObjectId> {
   _id?: string;
   title: string;
   aliasId: string;
-  cards: ICard[];
+  cards: ICard<TItem>[];
 }
 
-export interface ICard {
+export interface ICard<TItem = Schema.Types.ObjectId> {
   _id?: string;
   title?: string;
   layout: 'verticalLayout' | 'horizontalLayout' | 'singleInstrument';
-  items: Schema.Types.ObjectId[];
+  items: TItem[];
 }
 
 const cardSchema = new Schema<ICard>({

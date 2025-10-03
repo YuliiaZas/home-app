@@ -3,9 +3,12 @@ import mongoose, { type ClientSession, Types } from 'mongoose';
 import { DIContainer, SERVICE_TOKENS } from '@di';
 import { type IInstrumentService, type IUserInstrumentService } from '@interfaces';
 import { type IInstrument, type ITab, type IUserInstrument, UserInstrument } from '@models';
-import { AppError } from '@utils';
+import { INSTRUMENT_KEYS, type IUserInstrumentResponse, USER_INSTRUMENT_KEYS } from '@types';
+import { AppError, enumKeysToSelector } from '@utils';
 
 export class UserInstrumentService implements IUserInstrumentService {
+  private ITEMS_POPULATE_OPTIONS = { path: 'instrument', select: enumKeysToSelector(INSTRUMENT_KEYS) };
+
   private instrumentService: IInstrumentService;
 
   constructor() {
@@ -30,8 +33,12 @@ export class UserInstrumentService implements IUserInstrumentService {
     return userInstrument;
   }
 
-  async getUserInstruments(userId: string): Promise<IUserInstrument[]> {
-    return await UserInstrument.find({ userId });
+  async getUserInstruments(userId: string): Promise<IUserInstrumentResponse[]> {
+    return await UserInstrument
+      .find({ userId })
+      .populate(this.ITEMS_POPULATE_OPTIONS)
+      .select(enumKeysToSelector(USER_INSTRUMENT_KEYS))
+      .lean<IUserInstrumentResponse[]>();
   }
 
   async updateUserInstrumentsForDashboard({

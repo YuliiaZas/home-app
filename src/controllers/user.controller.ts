@@ -1,7 +1,7 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { DIContainer, SERVICE_TOKENS } from '@di';
 import { type IUserService } from '@interfaces';
-import { type ILoginUserResponse, type IRegisterUserResponse, type IUserProfileResponse } from '@types';
+import { type AuthenticatedRequest, type ILoginUser, type IRegisterUser, type ILoginUserResponse, type IRegisterUserResponse, type IUserProfileResponse } from '@types';
 import { handleCommonErrors } from '@utils';
 
 export class UserController {
@@ -11,7 +11,7 @@ export class UserController {
     this.userService = DIContainer.resolve<IUserService>(SERVICE_TOKENS.User);
   }
 
-  async registerUser(req: Request, res: Response<IRegisterUserResponse>) {
+  async registerUser(req: AuthenticatedRequest<object, IRegisterUser>, res: Response<IRegisterUserResponse>) {
     try {
       const { userName, password, fullName } = req.body;
 
@@ -21,7 +21,7 @@ export class UserController {
     }
   }
 
-  async loginUser(req: Request, res: Response<ILoginUserResponse>) {
+  async loginUser(req: AuthenticatedRequest<object, ILoginUser>, res: Response<ILoginUserResponse>) {
     try {
       const { userName, password } = req.body;
 
@@ -31,7 +31,7 @@ export class UserController {
     }
   }
 
-  async getProfile(req: Request, res: Response<IUserProfileResponse | null>) {
+  async getProfile(req: AuthenticatedRequest, res: Response<IUserProfileResponse | null>) {
     try {
       res.json(await this.userService.getProfile(req.user.id));
     } catch (error: unknown) {

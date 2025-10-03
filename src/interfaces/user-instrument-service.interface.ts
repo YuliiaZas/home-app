@@ -1,5 +1,6 @@
 import { type ClientSession } from 'mongoose';
 import { type ITab, type IUserInstrument } from '@models';
+import { type IUserInstrumentResponse } from '@types';
 
 export interface IUserInstrumentService {
   updateUserInstrumentState(params: {
@@ -8,7 +9,7 @@ export interface IUserInstrumentService {
     state: boolean;
   }): Promise<IUserInstrument | null>;
 
-  getUserInstruments(userId: string): Promise<IUserInstrument[]>;
+  getUserInstruments(userId: string): Promise<IUserInstrumentResponse[]>;
 
   updateUserInstrumentsForDashboard(params: {
     userId: string;

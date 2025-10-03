@@ -13,6 +13,7 @@ export interface IUserInstrument extends Document {
     amount: number | string | boolean;
     unit: string | null;
   };
+  instrument?: IInstrument; // Virtual populated field
 }
 
 const userInstrumentSchema = new Schema<IUserInstrument>({
@@ -59,5 +60,12 @@ userInstrumentSchema.pre('validate', async function (next) {
 });
 
 userInstrumentSchema.index({ userId: 1, instrumentId: 1 }, { unique: true });
+
+userInstrumentSchema.virtual('instrument', {
+  ref: 'Instrument',
+  localField: 'instrumentId',
+  foreignField: '_id',
+  justOne: true,
+});
 
 export const UserInstrument = model('UserInstrument', userInstrumentSchema);

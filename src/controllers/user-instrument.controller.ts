@@ -1,6 +1,7 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { DIContainer, SERVICE_TOKENS } from '@di';
 import { type IUserInstrumentService } from '@interfaces';
+import { type AuthenticatedRequest, type IUserInstrumentState } from '@types';
 import { handleCommonErrors } from '@utils';
 
 export class UserInstrumentController {  
@@ -10,7 +11,7 @@ export class UserInstrumentController {
     this.userInstrumentService = DIContainer.resolve<IUserInstrumentService>(SERVICE_TOKENS.UserInstrument);
   }
 
-  async updateInstrumentState(req: Request, res: Response) {
+  async updateInstrumentState(req: AuthenticatedRequest<{ instrumentId: string }, IUserInstrumentState>, res: Response) {
     try {
       const { instrumentId } = req.params;
       const { state } = req.body;
@@ -25,7 +26,7 @@ export class UserInstrumentController {
     }
   }
 
-  async getUserInstruments(req: Request, res: Response) {
+  async getUserInstruments(req: AuthenticatedRequest, res: Response) {
     try {
       res.status(200).json(await this.userInstrumentService.getUserInstruments(req.user.id));
     } catch (error: unknown) {

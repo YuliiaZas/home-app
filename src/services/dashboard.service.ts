@@ -2,12 +2,12 @@ import { startSession, Types } from 'mongoose';
 import { MongoError } from 'mongodb';
 import { DIContainer, SERVICE_TOKENS } from '@di';
 import { type IDashboardService, type IUserInstrumentService } from '@interfaces';
-import { Dashboard, DashboardTemplate, type IDashboard, type IDashboardBase, type IDashboardTemplate, type IInstrumentInput, type IUserInstrument } from '@models';
-import { type IDashboardRawResponse, type IDashboardResponse } from '@types';
-import { AppError } from '@utils';
+import { Dashboard, DashboardTemplate, type IDashboard, type IDashboardBase, type IDashboardTemplate, type IUserInstrument } from '@models';
+import { type IDashboardCreate, type IDashboardUpdate, type IInstrumentResponse, INSTRUMENT_KEYS, type IDashboardRawResponse, type IDashboardResponse } from '@types';
+import { AppError, enumKeysToSelector } from '@utils';
 
 export class DashboardService implements IDashboardService {
-  private ITEMS_POPULATE_OPTIONS = { path: 'tabs.cards.items', select: '_id type icon label' };
+  private ITEMS_POPULATE_OPTIONS = { path: 'tabs.cards.items', select: enumKeysToSelector(INSTRUMENT_KEYS) };
 
   private userInstrumentService: IUserInstrumentService;
 
@@ -19,7 +19,7 @@ export class DashboardService implements IDashboardService {
     return await Dashboard.find<IDashboard>({ userId }).select('title icon aliasId');
   }
 
-  async createDashboard({ userId, title, icon, aliasId }: { userId: string; title: string; icon: string; aliasId: string }): Promise<IDashboard> {
+  async createDashboard(userId: string, { title, icon, aliasId }: IDashboardCreate): Promise<IDashboard> {
     return await Dashboard.create({
       userId,
       title,
@@ -36,7 +36,7 @@ export class DashboardService implements IDashboardService {
     return await this.resolveDashboardWithInstruments(dashboard, userId);
   }
 
-  async updateDashboard({ userId, aliasId, title, icon, tabs }: {userId: string; aliasId: string; title?: string; icon?: string; tabs?: IDashboard['tabs'] }): Promise<IDashboardResponse> {
+  async updateDashboard(userId: string, aliasId: string, { title, icon, tabs }: IDashboardUpdate): Promise<IDashboardResponse> {
     const dashboard = await Dashboard.findByAliasId(aliasId, userId);
     if (!dashboard) throw new AppError('Dashboard not found', 404);
 
@@ -156,7 +156,7 @@ export class DashboardService implements IDashboardService {
           ...card,
           items: (card.items || []).map((instrument) => {
             const userDevice = userInstrumentMap.get(instrument._id.toString());
-            const resolvedInstrument: IInstrumentInput & { _id: string } = {
+            const resolvedInstrument: IInstrumentResponse = {
               ...instrument,
               label: userDevice?.aliasLabel || instrument.label,
               ...(userDevice?.state !== undefined ? { state: userDevice?.state } : {}),
