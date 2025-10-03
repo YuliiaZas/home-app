@@ -1,14 +1,21 @@
-import { IDashboard, IDashboardBase } from '@models';
-import { IDashboardResponse } from '@types';
+import { type IDashboard } from '@models';
+import {
+  type IDashboardCreate,
+  type IDashboardUpdate,
+  type IDashboardResponse,
+  type IDashboardCreationResult,
+} from '@types';
 
 export interface IDashboardService {
-  ITEMS_POPULATE_OPTIONS: {path: string, select: string};
+  getDashboards(userId: string): Promise<IDashboard[]>;
 
-  addDefaultDashboards(userId: string):
-  Promise<{ created: string[]; skipped: string[]; failed: string[]; errors: string[] }>;
+  createDashboard(userId: string, params: IDashboardCreate): Promise<IDashboard>;
 
-  addDashboards(userId: string, dashboards: IDashboardBase[]):
-  Promise<{ created: string[]; skipped: string[]; failed: string[]; errors: string[] }>;
+  getDashboardByAliasId(userId: string, aliasId: string): Promise<IDashboardResponse>;
 
-  resolveDashboardWithInstruments(rawDashboard: IDashboard, userId: string): Promise<IDashboardResponse>;
+  updateDashboard(userId: string, aliasId: string, params: IDashboardUpdate): Promise<IDashboardResponse>;
+
+  deleteDashboard(userId: string, aliasId: string): Promise<void>;
+
+  addDefaultDashboards(userId: string): Promise<IDashboardCreationResult>;
 }

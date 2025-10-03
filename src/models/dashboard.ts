@@ -1,6 +1,6 @@
 import { Document, Model, Query, Schema, SchemaDefinition, model } from 'mongoose';
 import { VALIDATION } from '@constants';
-import { AppValidationError, validateTabAliasIds } from '@utils';
+import { AppValidationError, validateAliasIdsDuplication } from '@utils';
 
 export interface IDashboard extends IDashboardInput, Document {}
 
@@ -19,18 +19,18 @@ export interface IDashboardBase {
   tabs: ITab[];
 }
 
-export interface ITab {
+export interface ITab<TItem = Schema.Types.ObjectId> {
   _id?: string;
   title: string;
   aliasId: string;
-  cards: ICard[];
+  cards: ICard<TItem>[];
 }
 
-export interface ICard {
+export interface ICard<TItem = Schema.Types.ObjectId> {
   _id?: string;
   title?: string;
   layout: 'verticalLayout' | 'horizontalLayout' | 'singleInstrument';
-  items: Schema.Types.ObjectId[];
+  items: TItem[];
 }
 
 const cardSchema = new Schema<ICard>({
@@ -113,14 +113,17 @@ const dashboardSchema = new Schema<IDashboard>({
 dashboardSchema.index({ userId: 1, aliasId: 1 }, { unique: true });
 
 dashboardSchema.pre('validate', function (next) {
-  const duplicateTabAliasId = validateTabAliasIds(this.tabs);
+  const duplicateTabAliasId = validateAliasIdsDuplication(this.tabs);
   if (duplicateTabAliasId) {
     return next(new AppValidationError(`Duplicate Tab "aliasId" "${duplicateTabAliasId}" in the same dashboard`));
   }
   next();
 });
 
-dashboardSchema.statics.findByAliasId = function (aliasId: string, userId: string): Query<IDashboard | null, IDashboard> {
+dashboardSchema.statics.findByAliasId = function (
+  aliasId: string,
+  userId: string
+): Query<IDashboard | null, IDashboard> {
   return this.findOne({ aliasId, userId });
 };
 

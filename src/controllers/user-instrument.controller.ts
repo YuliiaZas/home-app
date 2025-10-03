@@ -1,32 +1,39 @@
-import { Request, Response } from 'express';
-import { UserInstrument } from '@models';
-import { AppError, handleCommonErrors } from '@utils';
+import { Response } from 'express';
+import { DIContainer, SERVICE_TOKENS } from '@di';
+import { type IUserInstrumentService } from '@interfaces';
+import { type AuthenticatedRequest, type IUserInstrumentState } from '@types';
+import { handleCommonErrors } from '@utils';
 
 export class UserInstrumentController {
-  async updateInstrumentState(req: Request, res: Response) {
+  private userInstrumentService: IUserInstrumentService;
+
+  constructor() {
+    this.userInstrumentService = DIContainer.resolve<IUserInstrumentService>(SERVICE_TOKENS.UserInstrument);
+  }
+
+  async updateInstrumentState(
+    req: AuthenticatedRequest<{ instrumentId: string }, IUserInstrumentState>,
+    res: Response
+  ) {
     try {
       const { instrumentId } = req.params;
       const { state } = req.body;
 
-      const userInstrument = await UserInstrument.findOne({
-        userId: req.user.id,
-        instrumentId,
-      });
-      if (!userInstrument) throw new AppError('User instrument not found', 404);
-
-      userInstrument.state = state;
-      await userInstrument.save();
-
-      res.status(200).json(userInstrument);
+      res.status(200).json(
+        await this.userInstrumentService.updateUserInstrumentState({
+          userId: req.user.id,
+          instrumentId,
+          state,
+        })
+      );
     } catch (error: unknown) {
       handleCommonErrors(error, res, 'Update Instrument State');
     }
   }
 
-  async getUserInstruments(req: Request, res: Response) {
+  async getUserInstruments(req: AuthenticatedRequest, res: Response) {
     try {
-      const userInstruments = await UserInstrument.find({ userId: req.user.id });
-      res.json(userInstruments);
+      res.status(200).json(await this.userInstrumentService.getUserInstruments(req.user.id));
     } catch (error: unknown) {
       handleCommonErrors(error, res, 'Get User Instruments');
     }

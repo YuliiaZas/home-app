@@ -1,6 +1,6 @@
 import { Document, Schema, model } from 'mongoose';
 import { VALIDATION } from '@constants';
-import { IInstrument } from '@models';
+import { type IInstrument } from '@models';
 import { AppError, AppValidationError, validateInstrumentData } from '@utils';
 
 export interface IUserInstrument extends Document {
@@ -13,6 +13,7 @@ export interface IUserInstrument extends Document {
     amount: number | string | boolean;
     unit: string | null;
   };
+  instrument?: IInstrument; // Virtual populated field
 }
 
 const userInstrumentSchema = new Schema<IUserInstrument>({
@@ -52,12 +53,19 @@ userInstrumentSchema.pre('validate', async function (next) {
     return next(new AppError(`Invalid instrument reference ${this.instrumentId}`, 404));
   }
 
-  const error = validateInstrumentData(instrument.type, instrument.state, instrument.value);
+  const error = validateInstrumentData(instrument.type, this.state, this.value);
   if (error) return next(new AppValidationError(error));
-  
+
   next();
 });
 
 userInstrumentSchema.index({ userId: 1, instrumentId: 1 }, { unique: true });
+
+userInstrumentSchema.virtual('instrument', {
+  ref: 'Instrument',
+  localField: 'instrumentId',
+  foreignField: '_id',
+  justOne: true,
+});
 
 export const UserInstrument = model('UserInstrument', userInstrumentSchema);

@@ -8,6 +8,7 @@ export interface IUserInput {
   fullName: string;
   tokenVersion: number;
   _password?: string; // Virtual field for plain text password
+  initials?: string; // Virtual field for computed initials
 }
 export interface IUser extends IUserInput, Document {}
 
@@ -104,8 +105,12 @@ userSchema.set('toJSON', {
   virtuals: true,
   transform: (_, returnedUser) => {
     returnedUser.initials = returnedUser.computedInitials;
+    delete returnedUser.computedInitials;
     delete returnedUser.passwordHash;
     delete returnedUser._password;
+    if (returnedUser.id) {
+      delete returnedUser._id;
+    }
     return returnedUser;
   },
 });

@@ -1,31 +1,101 @@
 import { startSession, Types } from 'mongoose';
 import { MongoError } from 'mongodb';
 import { DIContainer, SERVICE_TOKENS } from '@di';
-import { IDashboardService, IUserInstrumentService } from '@interfaces';
-import { Dashboard, DashboardTemplate, IDashboard, IDashboardBase, IDashboardTemplate } from '@models';
-import { IDashboardResponse } from '@types';
-import { AppError, getInstrumentIdsFromTabs, resolveDashboard } from '@utils';
+import { type IDashboardService, type IUserInstrumentService } from '@interfaces';
+import {
+  Dashboard,
+  DashboardTemplate,
+  type IDashboard,
+  type IDashboardBase,
+  type IDashboardTemplate,
+  type IUserInstrument,
+} from '@models';
+import {
+  type IDashboardCreate,
+  type IDashboardUpdate,
+  type IInstrumentResponse,
+  INSTRUMENT_KEYS,
+  type IDashboardRawResponse,
+  type IDashboardResponse,
+  type IDashboardCreationResult,
+} from '@types';
+import { AppError, enumKeysToSelector } from '@utils';
 
 export class DashboardService implements IDashboardService {
+  private ITEMS_POPULATE_OPTIONS = { path: 'tabs.cards.items', select: enumKeysToSelector(INSTRUMENT_KEYS) };
+
   private userInstrumentService: IUserInstrumentService;
 
   constructor() {
     this.userInstrumentService = DIContainer.resolve<IUserInstrumentService>(SERVICE_TOKENS.UserInstrument);
   }
 
-  ITEMS_POPULATE_OPTIONS = { path: 'tabs.cards.items', select: '_id type icon label' };
+  async getDashboards(userId: string): Promise<IDashboard[]> {
+    return await Dashboard.find<IDashboard>({ userId }).select('title icon aliasId');
+  }
 
-  async addDefaultDashboards(userId: string):
-  Promise<{ created: string[]; skipped: string[]; failed: string[]; errors: string[] }> {
+  async createDashboard(userId: string, { title, icon, aliasId }: IDashboardCreate): Promise<IDashboard> {
+    return await Dashboard.create({
+      userId,
+      title,
+      icon,
+      aliasId,
+      tabs: [],
+    });
+  }
+
+  async getDashboardByAliasId(userId: string, aliasId: string): Promise<IDashboardResponse> {
+    const dashboard = await Dashboard.findByAliasId(aliasId, userId);
+    if (!dashboard) throw new AppError('Dashboard not found', 404);
+
+    return await this.resolveDashboardWithInstruments(dashboard, userId);
+  }
+
+  async updateDashboard(
+    userId: string,
+    aliasId: string,
+    { title, icon, tabs }: IDashboardUpdate
+  ): Promise<IDashboardResponse> {
+    const dashboard = await Dashboard.findByAliasId(aliasId, userId);
+    if (!dashboard) throw new AppError('Dashboard not found', 404);
+
+    if (tabs) {
+      await this.userInstrumentService.updateUserInstrumentsForDashboard({
+        userId,
+        dashboardId: dashboard._id,
+        dashboardTabs: tabs,
+      });
+
+      dashboard.tabs = tabs;
+    }
+
+    if (title) dashboard.title = title;
+    if (icon) dashboard.icon = icon;
+
+    await dashboard.save();
+
+    return await this.resolveDashboardWithInstruments(dashboard, userId);
+  }
+
+  async deleteDashboard(userId: string, aliasId: string): Promise<void> {
+    const result = await Dashboard.findOneAndDelete<IDashboard>({ userId, aliasId });
+    if (!result?.value) throw new AppError('Dashboard not found', 404);
+
+    await this.userInstrumentService.removeUserInstrumentsForDashboard({
+      userId,
+      dashboardId: result.value._id,
+    });
+  }
+
+  async addDefaultDashboards(userId: string): Promise<IDashboardCreationResult> {
     const templates = await DashboardTemplate.find<IDashboardTemplate>().lean();
     if (!templates || templates.length === 0) throw new AppError('No dashboard templates found', 500);
 
     return await this.addDashboards(userId, templates);
   }
 
-  async addDashboards(userId: string, dashboards: IDashboardBase[]):
-  Promise<{ created: string[]; skipped: string[]; failed: string[]; errors: string[] }> {
-    const dashboardsCreation: { created: string[]; skipped: string[]; failed: string[]; errors: string[] } = {
+  private async addDashboards(userId: string, dashboards: IDashboardBase[]): Promise<IDashboardCreationResult> {
+    const dashboardsCreation: IDashboardCreationResult = {
       created: [],
       skipped: [],
       failed: [],
@@ -49,10 +119,10 @@ export class DashboardService implements IDashboardService {
           tabs: d.tabs,
         });
 
-        const { addedInstruments, removedInstruments } = await this.userInstrumentService.updateUserInstrumentsForDashboard({
+        await this.userInstrumentService.updateUserInstrumentsForDashboard({
           userId,
           dashboardId: dashboard._id,
-          updatedInstrumentIds: getInstrumentIdsFromTabs(dashboard.tabs) || [],
+          dashboardTabs: dashboard.tabs,
           session,
         });
 
@@ -63,18 +133,24 @@ export class DashboardService implements IDashboardService {
         dashboardsCreation.created.push(aliasId);
 
         console.log(`✅ Created default dashboard '${aliasId}' for user '${userId}'`);
-        console.log(
-          `✅ Updated UserInstruments for user '${userId}' and dashboard '${dashboard._id}'. Added: ${addedInstruments}, Removed: ${removedInstruments}`
-        );
       } catch (error) {
         await session.abortTransaction();
-        if (error instanceof MongoError && error.code === 11000 && 'keyPattern' in error && typeof error.keyPattern === 'object' && error.keyPattern !== null && 'aliasId' in error.keyPattern) {
+        if (
+          error instanceof MongoError &&
+          error.code === 11000 &&
+          'keyPattern' in error &&
+          typeof error.keyPattern === 'object' &&
+          error.keyPattern !== null &&
+          'aliasId' in error.keyPattern
+        ) {
           dashboardsCreation.skipped.push(aliasId);
           console.warn(`⚠️ Dashboard from template '${aliasId}' already exists for user '${userId}'. Skipping.`);
           continue;
         }
         dashboardsCreation.failed.push(aliasId);
-        dashboardsCreation.errors.push(error instanceof Error ? `${aliasId}: ${error.message}` : `${aliasId}: Unknown error`);
+        dashboardsCreation.errors.push(
+          error instanceof Error ? `${aliasId}: ${error.message}` : `${aliasId}: Unknown error`
+        );
         console.error(`❌ Failed to create dashboard from template '${aliasId}' for user '${userId}':`, error);
       } finally {
         session.endSession();
@@ -84,12 +160,41 @@ export class DashboardService implements IDashboardService {
     return dashboardsCreation;
   }
 
-  async resolveDashboardWithInstruments(rawDashboard: IDashboard, userId: string): Promise<IDashboardResponse> {
-    const dashboard = (await rawDashboard.populate(this.ITEMS_POPULATE_OPTIONS)).toObject();
+  private async resolveDashboardWithInstruments(rawDashboard: IDashboard, userId: string): Promise<IDashboardResponse> {
+    const dashboardPopulated = (await rawDashboard.populate(this.ITEMS_POPULATE_OPTIONS)).toObject();
 
-    return resolveDashboard({
-      dashboard,
-      userInstrumentMap: await this.userInstrumentService.getUserInstrumentsMapByDashboardId(userId, dashboard._id),
+    return this.resolveDashboard({
+      dashboard: dashboardPopulated,
+      userInstrumentMap: await this.userInstrumentService.getUserInstrumentsMapByDashboardId(userId, rawDashboard._id),
     });
+  }
+
+  private resolveDashboard({
+    dashboard,
+    userInstrumentMap,
+  }: {
+    dashboard: IDashboardRawResponse;
+    userInstrumentMap: Map<string, IUserInstrument>;
+  }): IDashboardResponse {
+    return {
+      ...dashboard,
+      tabs: (dashboard.tabs || []).map((tab) => ({
+        ...tab,
+        cards: (tab.cards || []).map((card) => ({
+          ...card,
+          items: (card.items || []).map((instrument) => {
+            const userDevice = userInstrumentMap.get(instrument._id.toString());
+            const resolvedInstrument: IInstrumentResponse = {
+              ...instrument,
+              label: userDevice?.aliasLabel || instrument.label,
+              ...(userDevice?.state !== undefined ? { state: userDevice?.state } : {}),
+              ...(userDevice?.value !== undefined ? { value: userDevice?.value } : {}),
+            };
+
+            return resolvedInstrument;
+          }),
+        })),
+      })),
+    };
   }
 }

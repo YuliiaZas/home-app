@@ -1,12 +1,19 @@
-import { Request, Response } from 'express';
-import { Instrument } from '@models';
+import { Response } from 'express';
+import { DIContainer, SERVICE_TOKENS } from '@di';
+import { type IInstrumentService } from '@interfaces';
+import { type AuthenticatedRequest, type IInstrumentResponse } from '@types';
 import { handleCommonErrors } from '@utils';
 
 export class InstrumentController {
-  async getInstruments(req: Request, res: Response) {
+  private instrumentService: IInstrumentService;
+
+  constructor() {
+    this.instrumentService = DIContainer.resolve<IInstrumentService>(SERVICE_TOKENS.Instrument);
+  }
+
+  async getInstruments(req: AuthenticatedRequest, res: Response<IInstrumentResponse[]>) {
     try {
-      const instruments = await Instrument.find();
-      res.json(instruments);
+      res.json(await this.instrumentService.getInstruments());
     } catch (error: unknown) {
       handleCommonErrors(error, res, 'Get Instruments');
     }

@@ -1,11 +1,11 @@
-import { IInstrument, ITab } from '@models';
-import { AppError } from './errors.utils';
+import { type IInstrument } from '@models';
 
 export function validateInstrumentData(
   type: IInstrument['type'],
   state?: boolean,
   value?: IInstrument['value']
 ): string | null {
+  console.log('Validating instrument data:', { type, state, value });
   if (type === 'device') {
     if (value?.amount !== undefined) {
       return 'Devices cannot have "value" defined';
@@ -28,12 +28,4 @@ export function validateInstrumentData(
   }
 
   return null;
-}
-
-export function getInstrumentIdsFromTabs(tabs: ITab[]): string[] {
-  try {
-    return tabs.flatMap((tab) => tab.cards.flatMap((card) => card.items));
-  } catch {
-    throw new AppError('Invalid tabs format', 400);
-  }
 }

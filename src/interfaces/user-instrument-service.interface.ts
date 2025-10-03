@@ -1,13 +1,22 @@
-import { ClientSession } from 'mongoose';
-import { IUserInstrument } from '@models';
+import { type ClientSession } from 'mongoose';
+import { type ITab, type IUserInstrument } from '@models';
+import { type IUserInstrumentResponse } from '@types';
 
 export interface IUserInstrumentService {
+  updateUserInstrumentState(params: {
+    userId: string;
+    instrumentId: string;
+    state: boolean;
+  }): Promise<IUserInstrument | null>;
+
+  getUserInstruments(userId: string): Promise<IUserInstrumentResponse[]>;
+
   updateUserInstrumentsForDashboard(params: {
     userId: string;
     dashboardId: string;
-    updatedInstrumentIds: string[];
+    dashboardTabs: ITab[];
     session?: ClientSession | null;
-  }): Promise<{ dashboardId: string; addedInstruments: number; removedInstruments: number }>;
+  }): Promise<void>;
 
   removeUserInstrumentsForDashboard({ userId, dashboardId }: { userId: string; dashboardId: string }): Promise<void>;
 
