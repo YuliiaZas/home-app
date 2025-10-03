@@ -22,7 +22,15 @@ router.delete('/dashboards/:aliasId', requireAuth, dashboardController.deleteDas
 
 router.get('/instruments', requireAuth, instrumentController.getInstruments.bind(instrumentController));
 
-router.get('/instruments/user', requireAuth, userInstrumentController.getUserInstruments.bind(userInstrumentController));
-router.patch('/instruments/user/:instrumentId', requireAuth, userInstrumentController.updateInstrumentState.bind(userInstrumentController));
+router.get(
+  '/instruments/user',
+  requireAuth,
+  userInstrumentController.getUserInstruments.bind(userInstrumentController)
+);
+router.patch(
+  '/instruments/user/:instrumentId',
+  requireAuth,
+  userInstrumentController.updateInstrumentState.bind(userInstrumentController)
+);
 
 export default router;

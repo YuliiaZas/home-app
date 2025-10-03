@@ -55,7 +55,7 @@ userInstrumentSchema.pre('validate', async function (next) {
 
   const error = validateInstrumentData(instrument.type, this.state, this.value);
   if (error) return next(new AppValidationError(error));
-  
+
   next();
 });
 

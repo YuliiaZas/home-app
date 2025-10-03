@@ -120,7 +120,10 @@ dashboardSchema.pre('validate', function (next) {
   next();
 });
 
-dashboardSchema.statics.findByAliasId = function (aliasId: string, userId: string): Query<IDashboard | null, IDashboard> {
+dashboardSchema.statics.findByAliasId = function (
+  aliasId: string,
+  userId: string
+): Query<IDashboard | null, IDashboard> {
   return this.findOne({ aliasId, userId });
 };
 

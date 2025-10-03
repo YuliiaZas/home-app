@@ -34,8 +34,7 @@ export class UserInstrumentService implements IUserInstrumentService {
   }
 
   async getUserInstruments(userId: string): Promise<IUserInstrumentResponse[]> {
-    return await UserInstrument
-      .find({ userId })
+    return await UserInstrument.find({ userId })
       .populate(this.ITEMS_POPULATE_OPTIONS)
       .select(enumKeysToSelector(USER_INSTRUMENT_KEYS))
       .lean<IUserInstrumentResponse[]>();
@@ -82,9 +81,7 @@ export class UserInstrumentService implements IUserInstrumentService {
       }
 
       if (!existingUserInstrumentsIds.includes(instrumentId)) {
-        bulkOptions.push(
-          this.getAddingOptionForDashboardInstrument(userId, dashboardObjectId, instrument)
-        );
+        bulkOptions.push(this.getAddingOptionForDashboardInstrument(userId, dashboardObjectId, instrument));
         addedInstruments++;
       }
     }
@@ -121,7 +118,9 @@ export class UserInstrumentService implements IUserInstrumentService {
     return await UserInstrument.find<IUserInstrument>({
       userId,
       dashboards: dashboardId,
-    }).lean().then(uis => new Map(uis.map(ui => [ui.instrumentId.toString(), ui])));
+    })
+      .lean()
+      .then((uis) => new Map(uis.map((ui) => [ui.instrumentId.toString(), ui])));
   }
 
   private getRemovingOptionForDashboardUserInstrument(
@@ -137,8 +136,8 @@ export class UserInstrumentService implements IUserInstrumentService {
     }
     return {
       updateOne: {
-        filter: { _id: userInstrument._id},
-        update: { $pull: { dashboards: dashboardObjectId } as mongoose.mongo.BSON.Document }
+        filter: { _id: userInstrument._id },
+        update: { $pull: { dashboards: dashboardObjectId } as mongoose.mongo.BSON.Document },
       },
     };
   }
@@ -157,10 +156,11 @@ export class UserInstrumentService implements IUserInstrumentService {
           $setOnInsert: {
             userId,
             instrumentId: instrument._id,
-            state: instrument?.type === 'device' ? instrument.state ?? false : undefined,
-            value: instrument?.type === 'sensor'
-              ? { amount: instrument.value?.amount ?? 0, unit: instrument.value?.unit ?? null }
-              : undefined,
+            state: instrument?.type === 'device' ? (instrument.state ?? false) : undefined,
+            value:
+              instrument?.type === 'sensor'
+                ? { amount: instrument.value?.amount ?? 0, unit: instrument.value?.unit ?? null }
+                : undefined,
           },
           $addToSet: { dashboards: dashboardObjectId } as mongoose.mongo.BSON.Document,
         },
@@ -171,7 +171,7 @@ export class UserInstrumentService implements IUserInstrumentService {
 
   private getInstrumentIdsFromTabs(tabs: ITab[]): string[] {
     try {
-      return tabs.flatMap((tab) => tab.cards.flatMap((card) => card.items.map(item => item.toString())));
+      return tabs.flatMap((tab) => tab.cards.flatMap((card) => card.items.map((item) => item.toString())));
     } catch {
       throw new AppError('Invalid tabs format', 400);
     }

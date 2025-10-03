@@ -1,7 +1,14 @@
 import { Response } from 'express';
 import { DIContainer, SERVICE_TOKENS } from '@di';
 import { type IUserService } from '@interfaces';
-import { type AuthenticatedRequest, type ILoginUser, type IRegisterUser, type ILoginUserResponse, type IRegisterUserResponse, type IUserProfileResponse } from '@types';
+import {
+  type AuthenticatedRequest,
+  type ILoginUser,
+  type IRegisterUser,
+  type ILoginUserResponse,
+  type IRegisterUserResponse,
+  type IUserProfileResponse,
+} from '@types';
 import { handleCommonErrors } from '@utils';
 
 export class UserController {

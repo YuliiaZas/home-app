@@ -2,8 +2,23 @@ import { startSession, Types } from 'mongoose';
 import { MongoError } from 'mongodb';
 import { DIContainer, SERVICE_TOKENS } from '@di';
 import { type IDashboardService, type IUserInstrumentService } from '@interfaces';
-import { Dashboard, DashboardTemplate, type IDashboard, type IDashboardBase, type IDashboardTemplate, type IUserInstrument } from '@models';
-import { type IDashboardCreate, type IDashboardUpdate, type IInstrumentResponse, INSTRUMENT_KEYS, type IDashboardRawResponse, type IDashboardResponse } from '@types';
+import {
+  Dashboard,
+  DashboardTemplate,
+  type IDashboard,
+  type IDashboardBase,
+  type IDashboardTemplate,
+  type IUserInstrument,
+} from '@models';
+import {
+  type IDashboardCreate,
+  type IDashboardUpdate,
+  type IInstrumentResponse,
+  INSTRUMENT_KEYS,
+  type IDashboardRawResponse,
+  type IDashboardResponse,
+  type IDashboardCreationResult,
+} from '@types';
 import { AppError, enumKeysToSelector } from '@utils';
 
 export class DashboardService implements IDashboardService {
@@ -36,7 +51,11 @@ export class DashboardService implements IDashboardService {
     return await this.resolveDashboardWithInstruments(dashboard, userId);
   }
 
-  async updateDashboard(userId: string, aliasId: string, { title, icon, tabs }: IDashboardUpdate): Promise<IDashboardResponse> {
+  async updateDashboard(
+    userId: string,
+    aliasId: string,
+    { title, icon, tabs }: IDashboardUpdate
+  ): Promise<IDashboardResponse> {
     const dashboard = await Dashboard.findByAliasId(aliasId, userId);
     if (!dashboard) throw new AppError('Dashboard not found', 404);
 
@@ -68,17 +87,15 @@ export class DashboardService implements IDashboardService {
     });
   }
 
-  async addDefaultDashboards(userId: string):
-  Promise<{ created: string[]; skipped: string[]; failed: string[]; errors: string[] }> {
+  async addDefaultDashboards(userId: string): Promise<IDashboardCreationResult> {
     const templates = await DashboardTemplate.find<IDashboardTemplate>().lean();
     if (!templates || templates.length === 0) throw new AppError('No dashboard templates found', 500);
 
     return await this.addDashboards(userId, templates);
   }
 
-  private async addDashboards(userId: string, dashboards: IDashboardBase[]):
-  Promise<{ created: string[]; skipped: string[]; failed: string[]; errors: string[] }> {
-    const dashboardsCreation: { created: string[]; skipped: string[]; failed: string[]; errors: string[] } = {
+  private async addDashboards(userId: string, dashboards: IDashboardBase[]): Promise<IDashboardCreationResult> {
+    const dashboardsCreation: IDashboardCreationResult = {
       created: [],
       skipped: [],
       failed: [],
@@ -118,13 +135,22 @@ export class DashboardService implements IDashboardService {
         console.log(`✅ Created default dashboard '${aliasId}' for user '${userId}'`);
       } catch (error) {
         await session.abortTransaction();
-        if (error instanceof MongoError && error.code === 11000 && 'keyPattern' in error && typeof error.keyPattern === 'object' && error.keyPattern !== null && 'aliasId' in error.keyPattern) {
+        if (
+          error instanceof MongoError &&
+          error.code === 11000 &&
+          'keyPattern' in error &&
+          typeof error.keyPattern === 'object' &&
+          error.keyPattern !== null &&
+          'aliasId' in error.keyPattern
+        ) {
           dashboardsCreation.skipped.push(aliasId);
           console.warn(`⚠️ Dashboard from template '${aliasId}' already exists for user '${userId}'. Skipping.`);
           continue;
         }
         dashboardsCreation.failed.push(aliasId);
-        dashboardsCreation.errors.push(error instanceof Error ? `${aliasId}: ${error.message}` : `${aliasId}: Unknown error`);
+        dashboardsCreation.errors.push(
+          error instanceof Error ? `${aliasId}: ${error.message}` : `${aliasId}: Unknown error`
+        );
         console.error(`❌ Failed to create dashboard from template '${aliasId}' for user '${userId}':`, error);
       } finally {
         session.endSession();
@@ -143,8 +169,10 @@ export class DashboardService implements IDashboardService {
     });
   }
 
-
-  private resolveDashboard({ dashboard, userInstrumentMap }: {
+  private resolveDashboard({
+    dashboard,
+    userInstrumentMap,
+  }: {
     dashboard: IDashboardRawResponse;
     userInstrumentMap: Map<string, IUserInstrument>;
   }): IDashboardResponse {
@@ -161,8 +189,8 @@ export class DashboardService implements IDashboardService {
               label: userDevice?.aliasLabel || instrument.label,
               ...(userDevice?.state !== undefined ? { state: userDevice?.state } : {}),
               ...(userDevice?.value !== undefined ? { value: userDevice?.value } : {}),
-            }
-  
+            };
+
             return resolvedInstrument;
           }),
         })),

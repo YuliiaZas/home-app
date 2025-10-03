@@ -1,7 +1,14 @@
 import { DIContainer, SERVICE_TOKENS } from '@di';
 import { type IDashboardService, type IUserService } from '@interfaces';
 import { User } from '@models';
-import { USER_KEYS, type ILoginUser, type ILoginUserResponse, type IRegisterUser, type IRegisterUserResponse, type IUserProfileResponse } from '@types';
+import {
+  USER_KEYS,
+  type ILoginUser,
+  type ILoginUserResponse,
+  type IRegisterUser,
+  type IRegisterUserResponse,
+  type IUserProfileResponse,
+} from '@types';
 import { AppAuthError, enumKeysToSelector, signAccessToken } from '@utils';
 
 export class UserService implements IUserService {
@@ -23,12 +30,12 @@ export class UserService implements IUserService {
   async loginUser({ userName, password }: ILoginUser): Promise<ILoginUserResponse> {
     const user = await User.authenticate(userName, password);
     if (!user) throw new AppAuthError('Invalid credentials');
-  
+
     const token = signAccessToken(user);
     return { token };
   }
 
-  async getProfile(userId: string ): Promise<IUserProfileResponse | null> {
+  async getProfile(userId: string): Promise<IUserProfileResponse | null> {
     return (await User.findById(userId).select(enumKeysToSelector(USER_KEYS)))?.toJSON() || null;
   }
 }
