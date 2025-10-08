@@ -151,12 +151,17 @@ const dashboardTransformFunction = (returnedDashboard: Record<string, unknown>) 
   delete returnedDashboard._id;
   delete returnedDashboard.__v;
   delete returnedDashboard.userId;
-  return returnedDashboard;
-};
 
-const tabTransformFunction = (returnedTab: Record<string, unknown>) => {
-  delete returnedTab._id;
-  return returnedTab;
+  if (returnedDashboard.tabs && Array.isArray(returnedDashboard.tabs)) {
+    returnedDashboard.tabs.forEach((tab: ITab) => {
+      if (tab.cards && Array.isArray(tab.cards)) {
+        delete tab._id;
+        tab.cards.sort((a: ICard, b: ICard) => (a.order || 0) - (b.order || 0));
+      }
+    });
+  }
+
+  return returnedDashboard;
 };
 
 dashboardSchema.set('toJSON', {
@@ -165,10 +170,6 @@ dashboardSchema.set('toJSON', {
 
 dashboardSchema.set('toObject', {
   transform: (_, returnedDashboard) => dashboardTransformFunction(returnedDashboard),
-});
-
-tabSchema.set('toObject', {
-  transform: (_, returnedTab) => tabTransformFunction(returnedTab),
 });
 
 export const Dashboard = model<IDashboard, IDashboardModel>('Dashboard', dashboardSchema);

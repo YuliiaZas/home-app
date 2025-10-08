@@ -94,7 +94,7 @@ export class DashboardService implements IDashboardService {
     return await this.addDashboards(userId, templates);
   }
 
-  private async addDashboards(userId: string, dashboards: IDashboardBase[]): Promise<IDashboardCreationResult> {
+  private async addDashboards(userId: string, dashboards: IDashboardBase<string>[]): Promise<IDashboardCreationResult> {
     const dashboardsCreation: IDashboardCreationResult = {
       created: [],
       skipped: [],
