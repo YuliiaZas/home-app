@@ -1,6 +1,6 @@
 import { Document, Model, Query, Schema, SchemaDefinition, model } from 'mongoose';
 import { VALIDATION } from '@constants';
-import { AppValidationError, validateAliasIdsDuplication } from '@utils';
+import { AppValidationError, validateAliasIdsDuplication, validateCardOrder } from '@utils';
 
 export interface IDashboard extends IDashboardInput, Document {}
 
@@ -12,11 +12,11 @@ export interface IDashboardInput extends IDashboardBase {
   userId: Schema.Types.ObjectId;
 }
 
-export interface IDashboardBase {
+export interface IDashboardBase<TItem = Schema.Types.ObjectId> {
   title: string;
   icon: string;
   aliasId: string;
-  tabs: ITab[];
+  tabs: ITab<TItem>[];
 }
 
 export interface ITab<TItem = Schema.Types.ObjectId> {
@@ -27,9 +27,10 @@ export interface ITab<TItem = Schema.Types.ObjectId> {
 }
 
 export interface ICard<TItem = Schema.Types.ObjectId> {
-  _id?: string;
+  _id: string;
   title?: string;
   layout: 'verticalLayout' | 'horizontalLayout' | 'singleInstrument';
+  order: number;
   items: TItem[];
 }
 
@@ -43,20 +44,20 @@ const cardSchema = new Schema<ICard>({
   layout: {
     type: String,
     enum: ['verticalLayout', 'horizontalLayout', 'singleInstrument'],
-    required: VALIDATION.ARRAY.REQUIRED('Card `layout"'),
+    required: VALIDATION.ARRAY.REQUIRED('Card "layout"'),
   },
 
   items: [{ type: Schema.Types.ObjectId, ref: 'Instrument', required: true }],
-});
 
-cardSchema.pre('validate', function (next) {
-  if (this.layout === 'singleInstrument' && this.items.length > 1) {
-    return next(new AppValidationError('"singleInstrument" cards can only contain 1 item'));
-  }
-  if (this.layout === 'verticalLayout' && this.items.length > 4) {
-    return next(new AppValidationError('"verticalLayout" cards can contain max 4 items'));
-  }
-  next();
+  order: {
+    type: Number,
+    required: VALIDATION.ARRAY.REQUIRED('Card "order"'),
+    min: VALIDATION.ARRAY.MIN('Card "order"', 0),
+    validate: {
+      validator: Number.isInteger,
+      message: 'Card "order" must be an integer',
+    },
+  },
 });
 
 const tabSchema = new Schema<ITab>({
@@ -76,6 +77,23 @@ const tabSchema = new Schema<ITab>({
   },
 
   cards: [cardSchema],
+});
+
+tabSchema.pre('validate', function (next) {
+  const cardOrderValidation = validateCardOrder(this.cards);
+  if (cardOrderValidation) {
+    const { order, duplicationIds, overMaxId } = cardOrderValidation;
+    if (overMaxId) {
+      return next(new AppValidationError(VALIDATION.MESSAGES.MAX(`Card "order"`, this.cards.length - 1, `card ${overMaxId}`)));
+    }
+    if (duplicationIds) {
+      return next(new AppValidationError(
+        VALIDATION.MESSAGES.DUPLICATE(`Card "order"`, order, `tab for cards "${duplicationIds.join('", "')}"`)
+      ));
+    }
+  }
+
+  next();
 });
 
 export const dashboardSchemaDefinition: SchemaDefinition = {
@@ -115,7 +133,9 @@ dashboardSchema.index({ userId: 1, aliasId: 1 }, { unique: true });
 dashboardSchema.pre('validate', function (next) {
   const duplicateTabAliasId = validateAliasIdsDuplication(this.tabs);
   if (duplicateTabAliasId) {
-    return next(new AppValidationError(`Duplicate Tab "aliasId" "${duplicateTabAliasId}" in the same dashboard`));
+    return next(new AppValidationError(
+      VALIDATION.MESSAGES.DUPLICATE(`Tab "aliasId"`, duplicateTabAliasId, `dashboard`)
+    ));
   }
   next();
 });
@@ -131,12 +151,17 @@ const dashboardTransformFunction = (returnedDashboard: Record<string, unknown>) 
   delete returnedDashboard._id;
   delete returnedDashboard.__v;
   delete returnedDashboard.userId;
-  return returnedDashboard;
-};
 
-const tabTransformFunction = (returnedTab: Record<string, unknown>) => {
-  delete returnedTab._id;
-  return returnedTab;
+  if (returnedDashboard.tabs && Array.isArray(returnedDashboard.tabs)) {
+    returnedDashboard.tabs.forEach((tab: ITab) => {
+      if (tab.cards && Array.isArray(tab.cards)) {
+        delete tab._id;
+        tab.cards.sort((a: ICard, b: ICard) => (a.order || 0) - (b.order || 0));
+      }
+    });
+  }
+
+  return returnedDashboard;
 };
 
 dashboardSchema.set('toJSON', {
@@ -145,10 +170,6 @@ dashboardSchema.set('toJSON', {
 
 dashboardSchema.set('toObject', {
   transform: (_, returnedDashboard) => dashboardTransformFunction(returnedDashboard),
-});
-
-tabSchema.set('toObject', {
-  transform: (_, returnedTab) => tabTransformFunction(returnedTab),
 });
 
 export const Dashboard = model<IDashboard, IDashboardModel>('Dashboard', dashboardSchema);

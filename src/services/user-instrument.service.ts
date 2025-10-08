@@ -76,8 +76,7 @@ export class UserInstrumentService implements IUserInstrumentService {
     for (const instrumentId of updatedInstrumentIds) {
       const instrument = await this.instrumentService.getInstrumentById(instrumentId, session);
       if (!instrument) {
-        console.warn(`Instrument with ID ${instrumentId} not found. Skipping.`);
-        continue;
+        throw new AppError(`Instrument with ID ${instrumentId} not found`, 404);
       }
 
       if (!existingUserInstrumentsIds.includes(instrumentId)) {

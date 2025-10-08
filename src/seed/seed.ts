@@ -59,8 +59,9 @@ async function seed() {
       ...tpl,
       tabs: tpl.tabs.map((tabTpl) => ({
         ...tabTpl,
-        cards: tabTpl.cards.map((cardTpl) => ({
+        cards: tabTpl.cards.map((cardTpl, i) => ({
           ...cardTpl,
+          order: i,
           items: cardTpl.itemAliasIds.map((aliasId: string) => aliasToId.get(aliasId) || aliasId),
         })),
       })),

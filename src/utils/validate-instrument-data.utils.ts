@@ -5,7 +5,6 @@ export function validateInstrumentData(
   state?: boolean,
   value?: IInstrument['value']
 ): string | null {
-  console.log('Validating instrument data:', { type, state, value });
   if (type === 'device') {
     if (value?.amount !== undefined) {
       return 'Devices cannot have "value" defined';
