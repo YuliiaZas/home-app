@@ -2,7 +2,7 @@ import { Document, Schema, model } from 'mongoose';
 import { AppValidationError, validateAliasIdsDuplication } from '@utils';
 import { dashboardSchemaDefinition, type IDashboardBase } from './dashboard';
 
-export interface DashboardTemplateInput extends IDashboardBase {
+export interface DashboardTemplateInput extends IDashboardBase<string> {
   isTemplate: boolean;
 }
 

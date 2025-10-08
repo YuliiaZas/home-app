@@ -19,12 +19,16 @@ export const VALIDATION = {
   },
   MESSAGES: {
     REQUIRED: (field: string) => `${field} is required`,
+    MIN: (field: string, min: number) => `${field} must be more or equal ${min}`,
+    MAX: (field: string, max: number, info?: string) => `${field} cannot exceed ${max}${info ? ` (${info})` : ''}`,
+    DUPLICATE: (field: string, value: string | number, area: string) => `Duplicate ${field} "${value}" in the same ${area}`,
     MIN_LENGTH: (field: string, min: number) => `${field} must be at least ${min} characters`,
     MAX_LENGTH: (field: string, max: number) => `${field} cannot exceed ${max} characters`,
     PATTERN: (field: string, pattern: RegExp) => `${field} does not match required pattern: ${pattern.toString()}`,
   },
   ARRAY: {
     REQUIRED: (field: string): [boolean, string] => [true, VALIDATION.MESSAGES.REQUIRED(field)],
+    MIN: (field: string, min: number): [number, string] => [min, VALIDATION.MESSAGES.MIN(field, min)],
     MIN_LENGTH: (field: string, min: number): [number, string] => [min, VALIDATION.MESSAGES.MIN_LENGTH(field, min)],
     MAX_LENGTH: (field: string, max: number): [number, string] => [max, VALIDATION.MESSAGES.MAX_LENGTH(field, max)],
     PATTERN: (field: string, pattern: RegExp): [RegExp, string] => [

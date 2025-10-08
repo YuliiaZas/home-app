@@ -46,7 +46,7 @@ export class DashboardService implements IDashboardService {
 
   async getDashboardByAliasId(userId: string, aliasId: string): Promise<IDashboardResponse> {
     const dashboard = await Dashboard.findByAliasId(aliasId, userId);
-    if (!dashboard) throw new AppError('Dashboard not found', 404);
+    if (!dashboard) throw new AppError(`Dashboard "${aliasId}" not found`, 404);
 
     return await this.resolveDashboardWithInstruments(dashboard, userId);
   }
@@ -57,7 +57,7 @@ export class DashboardService implements IDashboardService {
     { title, icon, tabs }: IDashboardUpdate
   ): Promise<IDashboardResponse> {
     const dashboard = await Dashboard.findByAliasId(aliasId, userId);
-    if (!dashboard) throw new AppError('Dashboard not found', 404);
+    if (!dashboard) throw new AppError(`Dashboard "${aliasId}" not found`, 404);
 
     if (tabs) {
       await this.userInstrumentService.updateUserInstrumentsForDashboard({
@@ -78,12 +78,12 @@ export class DashboardService implements IDashboardService {
   }
 
   async deleteDashboard(userId: string, aliasId: string): Promise<void> {
-    const result = await Dashboard.findOneAndDelete<IDashboard>({ userId, aliasId });
-    if (!result?.value) throw new AppError('Dashboard not found', 404);
+    const deleted = await Dashboard.findOneAndDelete<IDashboard>({ userId, aliasId }).lean();
+    if (!deleted) throw new AppError(`Dashboard "${aliasId}" not found`, 404);
 
     await this.userInstrumentService.removeUserInstrumentsForDashboard({
       userId,
-      dashboardId: result.value._id,
+      dashboardId: deleted._id,
     });
   }
 
