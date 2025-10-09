@@ -1,4 +1,11 @@
 import { Request } from 'express';
+import 'express';
+
+declare module 'express-serve-static-core' {
+  interface Request {
+    user: AuthenticatedUser;
+  }
+}
 
 export type TypedRequest<TParams = object, TBody = object, TQuery = object> = Request<TParams, unknown, TBody, TQuery>;
 
