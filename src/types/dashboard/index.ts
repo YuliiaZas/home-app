@@ -5,4 +5,4 @@ export * from './dashboard-overview';
 export * from './dashboard-alias-id';
 export * from './dashboard-create';
 export * from './dashboard-update';
-export * from './dashboard-creation-result';
+export * from './dashboards-creation-result';

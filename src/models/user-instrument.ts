@@ -1,7 +1,7 @@
 import { Document, Schema, model } from 'mongoose';
 import { VALIDATION } from '@constants';
 import { type IInstrument } from '@models';
-import { AppError, AppValidationError, validateInstrumentData } from '@utils';
+import { AppNotFoundError, AppValidationError, validateInstrumentData } from '@utils';
 
 export interface IUserInstrument extends Document {
   userId: Schema.Types.ObjectId;
@@ -50,7 +50,7 @@ userInstrumentSchema.pre('validate', async function (next) {
   const instrument = await Instrument.findById<IInstrument>(this.instrumentId);
 
   if (!instrument) {
-    return next(new AppError(`Invalid instrument reference ${this.instrumentId}`, 404));
+    return next(new AppNotFoundError(`Instrument reference ${this.instrumentId}`));    
   }
 
   const error = validateInstrumentData(instrument.type, this.state, this.value);

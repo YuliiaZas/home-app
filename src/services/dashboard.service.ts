@@ -17,9 +17,10 @@ import {
   INSTRUMENT_KEYS,
   type IDashboardRawResponse,
   type IDashboardResponse,
-  type IDashboardCreationResult,
+  type IDashboardsCreationResult,
+  IDashboardOverviewResponse,
 } from '@types';
-import { AppError, enumKeysToSelector } from '@utils';
+import { AppError, AppNotFoundError, enumKeysToSelector } from '@utils';
 
 export class DashboardService implements IDashboardService {
   private ITEMS_POPULATE_OPTIONS = { path: 'tabs.cards.items', select: enumKeysToSelector(INSTRUMENT_KEYS) };
@@ -30,23 +31,23 @@ export class DashboardService implements IDashboardService {
     this.userInstrumentService = DIContainer.resolve<IUserInstrumentService>(SERVICE_TOKENS.UserInstrument);
   }
 
-  async getDashboards(userId: string): Promise<IDashboard[]> {
+  async getDashboards(userId: string): Promise<IDashboardOverviewResponse[]> {
     return await Dashboard.find<IDashboard>({ userId }).select('title icon aliasId');
   }
 
-  async createDashboard(userId: string, { title, icon, aliasId }: IDashboardCreate): Promise<IDashboard> {
-    return await Dashboard.create({
+  async createDashboard(userId: string, { title, icon, aliasId }: IDashboardCreate): Promise<IDashboardResponse> {
+    return (await Dashboard.create({
       userId,
       title,
       icon,
       aliasId,
       tabs: [],
-    });
+    })).toJSON();
   }
 
   async getDashboardByAliasId(userId: string, aliasId: string): Promise<IDashboardResponse> {
     const dashboard = await Dashboard.findByAliasId(aliasId, userId);
-    if (!dashboard) throw new AppError(`Dashboard "${aliasId}" not found`, 404);
+    if (!dashboard) throw new AppNotFoundError(`Dashboard "${aliasId}"`);
 
     return await this.resolveDashboardWithInstruments(dashboard, userId);
   }
@@ -57,7 +58,7 @@ export class DashboardService implements IDashboardService {
     { title, icon, tabs }: IDashboardUpdate
   ): Promise<IDashboardResponse> {
     const dashboard = await Dashboard.findByAliasId(aliasId, userId);
-    if (!dashboard) throw new AppError(`Dashboard "${aliasId}" not found`, 404);
+    if (!dashboard) throw new AppNotFoundError(`Dashboard "${aliasId}"`);
 
     if (tabs) {
       await this.userInstrumentService.updateUserInstrumentsForDashboard({
@@ -79,7 +80,7 @@ export class DashboardService implements IDashboardService {
 
   async deleteDashboard(userId: string, aliasId: string): Promise<void> {
     const deleted = await Dashboard.findOneAndDelete<IDashboard>({ userId, aliasId }).lean();
-    if (!deleted) throw new AppError(`Dashboard "${aliasId}" not found`, 404);
+    if (!deleted) throw new AppNotFoundError(`Dashboard "${aliasId}"`);
 
     await this.userInstrumentService.removeUserInstrumentsForDashboard({
       userId,
@@ -87,15 +88,15 @@ export class DashboardService implements IDashboardService {
     });
   }
 
-  async addDefaultDashboards(userId: string): Promise<IDashboardCreationResult> {
+  async addDefaultDashboards(userId: string): Promise<IDashboardsCreationResult> {
     const templates = await DashboardTemplate.find<IDashboardTemplate>().lean();
     if (!templates || templates.length === 0) throw new AppError('No dashboard templates found', 500);
 
     return await this.addDashboards(userId, templates);
   }
 
-  private async addDashboards(userId: string, dashboards: IDashboardBase<string>[]): Promise<IDashboardCreationResult> {
-    const dashboardsCreation: IDashboardCreationResult = {
+  private async addDashboards(userId: string, dashboards: IDashboardBase<string>[]): Promise<IDashboardsCreationResult> {
+    const dashboardsCreation: IDashboardsCreationResult = {
       created: [],
       skipped: [],
       failed: [],

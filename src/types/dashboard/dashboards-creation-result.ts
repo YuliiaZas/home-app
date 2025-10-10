@@ -1,4 +1,4 @@
-export type IDashboardCreationResult = {
+export type IDashboardsCreationResult = {
   created: string[];
   skipped: string[];
   failed: string[];

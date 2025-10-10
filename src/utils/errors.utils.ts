@@ -21,6 +21,17 @@ export class AppAuthError extends AppError {
   }
 }
 
+export class AppNotFoundError extends AppError {
+  constructor(
+    public item = 'Item',
+    public statusCode = 404
+  ) {
+    super(item, statusCode);
+    this.name = 'AppNotFoundError';
+    this.message = `${item} not found`;
+  }
+}
+
 export class AppValidationError extends Error {
   constructor(public message: string) {
     super(message);
@@ -60,7 +71,7 @@ export const logAndRespond = {
 };
 
 export const handleCommonErrors = (error: unknown, res: Response, context: string) => {
-  if (error instanceof AppError) {
+  if (error instanceof AppError || error instanceof AppNotFoundError) {
     return logAndRespond.customError(res, error, context);
   }
 

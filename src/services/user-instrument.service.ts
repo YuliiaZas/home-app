@@ -4,7 +4,7 @@ import { DIContainer, SERVICE_TOKENS } from '@di';
 import { type IInstrumentService, type IUserInstrumentService } from '@interfaces';
 import { type IInstrument, type ITab, type IUserInstrument, UserInstrument } from '@models';
 import { INSTRUMENT_KEYS, type IUserInstrumentResponse, USER_INSTRUMENT_KEYS } from '@types';
-import { AppError, enumKeysToSelector } from '@utils';
+import { AppError, AppNotFoundError, enumKeysToSelector } from '@utils';
 
 export class UserInstrumentService implements IUserInstrumentService {
   private ITEMS_POPULATE_OPTIONS = { path: 'instrument', select: enumKeysToSelector(INSTRUMENT_KEYS) };
@@ -25,7 +25,7 @@ export class UserInstrumentService implements IUserInstrumentService {
     state: boolean;
   }): Promise<IUserInstrument | null> {
     const userInstrument = await UserInstrument.findOne({ userId, instrumentId });
-    if (!userInstrument) throw new AppError('User instrument not found', 404);
+    if (!userInstrument) throw new AppNotFoundError(`User instrument "${instrumentId}"`);
 
     userInstrument.state = state;
     await userInstrument.save();
@@ -76,7 +76,7 @@ export class UserInstrumentService implements IUserInstrumentService {
     for (const instrumentId of updatedInstrumentIds) {
       const instrument = await this.instrumentService.getInstrumentById(instrumentId, session);
       if (!instrument) {
-        throw new AppError(`Instrument with ID ${instrumentId} not found`, 404);
+        throw new AppNotFoundError(`Instrument "${instrumentId}"`);
       }
 
       if (!existingUserInstrumentsIds.includes(instrumentId)) {

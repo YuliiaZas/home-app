@@ -11,5 +11,5 @@ export interface IUserService {
 
   loginUser(params: ILoginUser): Promise<ILoginUserResponse>;
 
-  getProfile(userId: string): Promise<IUserProfileResponse | null>;
+  getProfile(userId: string): Promise<IUserProfileResponse>;
 }

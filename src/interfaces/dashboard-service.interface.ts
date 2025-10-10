@@ -1,15 +1,15 @@
-import { type IDashboard } from '@models';
 import {
   type IDashboardCreate,
   type IDashboardUpdate,
   type IDashboardResponse,
-  type IDashboardCreationResult,
+  type IDashboardsCreationResult,
+  type IDashboardOverviewResponse,
 } from '@types';
 
 export interface IDashboardService {
-  getDashboards(userId: string): Promise<IDashboard[]>;
+  getDashboards(userId: string): Promise<IDashboardOverviewResponse[]>;
 
-  createDashboard(userId: string, params: IDashboardCreate): Promise<IDashboard>;
+  createDashboard(userId: string, params: IDashboardCreate): Promise<IDashboardResponse>;
 
   getDashboardByAliasId(userId: string, aliasId: string): Promise<IDashboardResponse>;
 
@@ -17,5 +17,5 @@ export interface IDashboardService {
 
   deleteDashboard(userId: string, aliasId: string): Promise<void>;
 
-  addDefaultDashboards(userId: string): Promise<IDashboardCreationResult>;
+  addDefaultDashboards(userId: string): Promise<IDashboardsCreationResult>;
 }

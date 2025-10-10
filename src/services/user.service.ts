@@ -9,7 +9,7 @@ import {
   type IRegisterUserResponse,
   type IUserProfileResponse,
 } from '@types';
-import { AppAuthError, enumKeysToSelector, signAccessToken } from '@utils';
+import { AppAuthError, AppNotFoundError, enumKeysToSelector, signAccessToken } from '@utils';
 
 export class UserService implements IUserService {
   private dashboardService: IDashboardService;
@@ -31,11 +31,13 @@ export class UserService implements IUserService {
     const user = await User.authenticate(userName, password);
     if (!user) throw new AppAuthError('Invalid credentials');
 
-    const token = signAccessToken(user);
-    return { token };
+    return { token: signAccessToken(user) };
   }
 
-  async getProfile(userId: string): Promise<IUserProfileResponse | null> {
-    return (await User.findById(userId).select(enumKeysToSelector(USER_KEYS)))?.toJSON() || null;
+  async getProfile(userId: string): Promise<IUserProfileResponse> {
+    const profile = await User.findById(userId).select(enumKeysToSelector(USER_KEYS));
+    if (!profile) throw new AppNotFoundError('User');
+
+    return profile.toJSON();
   }
 }
