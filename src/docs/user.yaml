@@ -1,0 +1,182 @@
+tags:
+  name: Users
+  description: User management
+
+paths:
+  /user/register:
+    post:
+      summary: Register a new user
+      tags: [Users]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterUser'
+      responses:
+        200:
+          description: User registered successfully, status of default dashboards creation included in response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterUserResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        409:
+          $ref: '#/components/responses/Conflict'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+  /user/login:
+    post:
+      summary: Log in a user
+      tags: [Users]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginUser'
+      responses:
+        200:
+          description: User logged in successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginUserResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          description: Unauthorized - Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "Invalid credentials"
+        500:
+          $ref: '#/components/responses/InternalServerError'
+        
+
+  /user/profile:
+    get:
+      summary: Get the profile of the logged-in user
+      tags: [Users]
+      responses:
+        200:
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileResponse'
+                # oneOf:
+                #   - type: null
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    LoginUser:
+      type: object
+      required:
+        - userName
+        - password
+      properties:
+        userName:
+          type: string
+          minLength: 2
+          maxLength: 50
+          description: |
+            Username for the account
+            > Note: Must be unique across all users
+          example: johndoe
+        password:
+          type: string
+          format: password
+          minLength: 8
+          pattern: ^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};'"\\|,.<>/?]).{4,}$
+          description: User password
+          example: MyPassword123!
+
+    LoginUserResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: The JWT token for authentication
+      example:
+        token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    RegisterUser:
+      allOf:
+        - $ref: '#/components/schemas/LoginUser'
+        - type: object
+          required:
+            - fullName
+          properties:
+            fullName:
+              type: string
+              minLength: 2
+              maxLength: 100
+              description: Full name of the user
+              example: John Doe
+
+    RegisterUserResponse:
+      allOf:
+        - $ref: '#/components/schemas/LoginUserResponse'
+        - type: object
+          properties:
+            dashboardsCreation:
+              type: object
+              properties:
+                created:
+                  type: string[]
+                  description: The Alias IDs of default dashboard created for the user
+                skipped:
+                  type: string[]
+                  description: The Alias IDs of default dashboard skipped, as they are already created
+                failed:
+                  type: string[]
+                  description: The Alias IDs of default dashboard failed to create
+                errors:
+                  type: string[]
+                  description: The error messages for each failed dashboard creation
+          example:
+            token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+            dashboardsCreation:
+              created:
+                - "dashboard-alias-1"
+                - "dashboard-alias-2"
+              skipped:
+                - "dashboard-alias-0"
+              failed:
+                - "dashboard-alias-3"
+              errors:
+                - "Error message for dashboard-alias-3"
+
+    UserProfileResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The ID of the user
+        userName:
+          type: string
+          description: The username of the user
+        fullName:
+          type: string
+          description: The full name of the user
+        initials:
+          type: string
+          description: The initials of the user fullName
+      example:
+        id: 12345
+        userName: johndoe
+        fullName: John Doe
+        initials: "JD"
